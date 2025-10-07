@@ -229,8 +229,112 @@ impl Board {
     }
 }
 
+use std::io::{self, Write};
+
+/// Reads a line from stdin and returns it as a trimmed String
+fn read_line() -> String {
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+    input.trim().to_string()
+}
+
+/// Prompts the user to enter a position and returns a valid position (0-8)
+/// Returns None if the input is invalid
+fn get_user_move(board: &Board) -> Option<usize> {
+    print!("Enter your move (0-8): ");
+    io::stdout().flush().expect("Failed to flush stdout");
+
+    let input = read_line();
+
+    // Try to parse the input as a number
+    if let Ok(position) = input.parse::<usize>() {
+        if position < 9 && board.cells[position] == Cell::Empty {
+            return Some(position);
+        }
+    }
+
+    None
+}
+
+/// Runs the main game loop: human vs AI
+fn play_game() {
+    let mut board = Board::new();
+    let human = Mark::X;
+    let ai = Mark::O;
+
+    println!("\n=== Tic-Tac-Toe: Human (X) vs AI (O) ===\n");
+    println!("Positions are numbered 0-8:\n");
+    println!("0 | 1 | 2");
+    println!("---------");
+    println!("3 | 4 | 5");
+    println!("---------");
+    println!("6 | 7 | 8\n");
+
+    loop {
+        // Display current board
+        println!("\nCurrent board:");
+        println!("{}\n", board.display());
+
+        // Check game state
+        match board.game_state() {
+            GameState::Win(winner) => {
+                if winner == human {
+                    println!("🎉 You won! Congratulations!");
+                } else {
+                    println!("🤖 AI won! Better luck next time!");
+                }
+                break;
+            }
+            GameState::Draw => {
+                println!("🤝 It's a draw!");
+                break;
+            }
+            GameState::Ongoing => {}
+        }
+
+        // Human's turn
+        println!("Your turn (X):");
+        let human_move = loop {
+            if let Some(pos) = get_user_move(&board) {
+                break pos;
+            }
+            println!("Invalid move! Please enter a number 0-8 for an empty position.");
+            print!("Enter your move (0-8): ");
+            io::stdout().flush().expect("Failed to flush stdout");
+        };
+
+        board.place_mark(human_move, human).expect("Invalid move");
+
+        // Check if human won
+        match board.game_state() {
+            GameState::Win(winner) if winner == human => {
+                println!("\nFinal board:");
+                println!("{}\n", board.display());
+                println!("🎉 You won! Congratulations!");
+                break;
+            }
+            GameState::Draw => {
+                println!("\nFinal board:");
+                println!("{}\n", board.display());
+                println!("🤝 It's a draw!");
+                break;
+            }
+            _ => {}
+        }
+
+        // AI's turn
+        println!("\nAI is thinking...");
+        if let Some(ai_move) = board.best_move(ai) {
+            board.place_mark(ai_move, ai).expect("Invalid AI move");
+            println!("AI plays position {ai_move}");
+        }
+    }
+}
+
 fn main() {
-    println!("Tic-Tac-Toe Agent !");
+    play_game();
 }
 
 #[cfg(test)]
