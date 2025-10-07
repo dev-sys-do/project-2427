@@ -2,6 +2,14 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
+/// Represents the current state of the game
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameState {
+    Ongoing,
+    Win(Mark),
+    Draw,
+}
+
 /// Represents a player's mark on the board
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mark {
@@ -46,6 +54,31 @@ impl Board {
         Self {
             cells: [Cell::Empty; 9],
         }
+    }
+
+    /// Returns a string representation of the board for display
+    /// Format: 3x3 grid with X, O, or position numbers (0-8) for empty cells
+    #[must_use]
+    pub fn display(&self) -> String {
+        let mut result = String::new();
+        for row in 0..3 {
+            for col in 0..3 {
+                let pos = row * 3 + col;
+                let symbol = match self.cells[pos] {
+                    Cell::Empty => pos.to_string(),
+                    Cell::Filled(Mark::X) => "X".to_string(),
+                    Cell::Filled(Mark::O) => "O".to_string(),
+                };
+                result.push_str(&symbol);
+                if col < 2 {
+                    result.push_str(" | ");
+                }
+            }
+            if row < 2 {
+                result.push_str("\n---------\n");
+            }
+        }
+        result
     }
 
     /// Places a mark at the given position (0-8)
@@ -102,6 +135,18 @@ impl Board {
     #[must_use]
     pub fn is_draw(&self) -> bool {
         self.is_full() && self.check_winner().is_none()
+    }
+
+    /// Returns the current game state
+    #[must_use]
+    pub fn game_state(&self) -> GameState {
+        if let Some(winner) = self.check_winner() {
+            GameState::Win(winner)
+        } else if self.is_full() {
+            GameState::Draw
+        } else {
+            GameState::Ongoing
+        }
     }
 
     /// Returns a list of empty positions (legal moves)
@@ -322,6 +367,91 @@ mod tests {
     fn test_mark_opponent() {
         assert_eq!(Mark::X.opponent(), Mark::O);
         assert_eq!(Mark::O.opponent(), Mark::X);
+    }
+
+    #[test]
+    fn test_game_state_ongoing() {
+        let mut board = Board::new();
+        assert_eq!(board.game_state(), GameState::Ongoing);
+
+        board.place_mark(0, Mark::X).unwrap();
+        assert_eq!(board.game_state(), GameState::Ongoing);
+    }
+
+    #[test]
+    fn test_game_state_win() {
+        let mut board = Board::new();
+        board.place_mark(0, Mark::X).unwrap();
+        board.place_mark(1, Mark::X).unwrap();
+        board.place_mark(2, Mark::X).unwrap();
+        assert_eq!(board.game_state(), GameState::Win(Mark::X));
+    }
+
+    #[test]
+    fn test_game_state_draw() {
+        let mut board = Board::new();
+        let moves = [
+            (0, Mark::X),
+            (1, Mark::O),
+            (2, Mark::X),
+            (3, Mark::O),
+            (4, Mark::X),
+            (5, Mark::X),
+            (6, Mark::O),
+            (7, Mark::X),
+            (8, Mark::O),
+        ];
+        for (pos, mark) in &moves {
+            board.place_mark(*pos, *mark).unwrap();
+        }
+        assert_eq!(board.game_state(), GameState::Draw);
+    }
+
+    #[test]
+    fn test_display_empty_board() {
+        let board = Board::new();
+        let display = board.display();
+        assert!(display.contains("0 | 1 | 2"));
+        assert!(display.contains("3 | 4 | 5"));
+        assert!(display.contains("6 | 7 | 8"));
+        assert!(display.contains("---------"));
+    }
+
+    #[test]
+    fn test_display_partial_board() {
+        let mut board = Board::new();
+        board.place_mark(0, Mark::X).unwrap();
+        board.place_mark(4, Mark::O).unwrap();
+        board.place_mark(8, Mark::X).unwrap();
+
+        let display = board.display();
+        assert!(display.contains("X | 1 | 2"));
+        assert!(display.contains("3 | O | 5"));
+        assert!(display.contains("6 | 7 | X"));
+    }
+
+    #[test]
+    fn test_display_full_board() {
+        let mut board = Board::new();
+        let moves = [
+            (0, Mark::X),
+            (1, Mark::O),
+            (2, Mark::X),
+            (3, Mark::O),
+            (4, Mark::X),
+            (5, Mark::X),
+            (6, Mark::O),
+            (7, Mark::X),
+            (8, Mark::O),
+        ];
+        for (pos, mark) in &moves {
+            board.place_mark(*pos, *mark).unwrap();
+        }
+
+        let display = board.display();
+        assert!(display.contains("X | O | X"));
+        assert!(display.contains("O | X | X"));
+        assert!(display.contains("O | X | O"));
     }
 
     #[test]
