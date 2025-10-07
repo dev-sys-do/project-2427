@@ -117,6 +117,71 @@ impl Board {
             )
             .collect()
     }
+
+    /// Minimax algorithm: returns the best score for the current player
+    /// Maximizing when it's the player's turn, minimizing when it's the opponent's turn
+    #[must_use]
+    fn minimax(&self, player: Mark, is_maximizing: bool) -> i32 {
+        // Base case: if game is over, return evaluation
+        if let Some(winner) = self.check_winner() {
+            return if winner == player { 1 } else { -1 };
+        }
+        if self.is_full() {
+            return 0;
+        }
+
+        let legal_moves = self.legal_moves();
+
+        if is_maximizing {
+            let mut best_score = i32::MIN;
+            for position in legal_moves {
+                let mut new_board = self.clone();
+                new_board.place_mark(position, player).unwrap();
+                let score = new_board.minimax(player, false);
+                best_score = best_score.max(score);
+            }
+            best_score
+        } else {
+            let mut best_score = i32::MAX;
+            let opponent = player.opponent();
+            for position in legal_moves {
+                let mut new_board = self.clone();
+                new_board.place_mark(position, opponent).unwrap();
+                let score = new_board.minimax(player, true);
+                best_score = best_score.min(score);
+            }
+            best_score
+        }
+    }
+
+    /// Finds the best move for the given player using Minimax algorithm
+    /// Returns None if no legal moves are available
+    ///
+    /// # Panics
+    /// This function should not panic as it only places marks on known legal positions
+    #[must_use]
+    pub fn best_move(&self, player: Mark) -> Option<usize> {
+        let legal_moves = self.legal_moves();
+        if legal_moves.is_empty() {
+            return None;
+        }
+
+        let mut best_score = i32::MIN;
+        let mut best_position = None;
+
+        for position in legal_moves {
+            let mut new_board = self.clone();
+            new_board.place_mark(position, player).unwrap();
+            let score = new_board.minimax(player, false);
+
+            if score > best_score {
+                best_score = score;
+                best_position = Some(position);
+            }
+        }
+
+        best_position
+    }
 }
 
 fn main() {
@@ -257,5 +322,121 @@ mod tests {
     fn test_mark_opponent() {
         assert_eq!(Mark::X.opponent(), Mark::O);
         assert_eq!(Mark::O.opponent(), Mark::X);
+    }
+
+    #[test]
+    fn test_best_move_win_immediately() {
+        // X X _ / O O _ / _ _ _
+        // X should play position 2 to win
+        let mut board = Board::new();
+        board.place_mark(0, Mark::X).unwrap();
+        board.place_mark(1, Mark::X).unwrap();
+        board.place_mark(3, Mark::O).unwrap();
+        board.place_mark(4, Mark::O).unwrap();
+
+        let best = board.best_move(Mark::X);
+        assert_eq!(best, Some(2));
+    }
+
+    #[test]
+    fn test_best_move_block_opponent() {
+        // O O _ / X _ _ / _ _ _
+        // X should play position 2 to block O from winning
+        let mut board = Board::new();
+        board.place_mark(0, Mark::O).unwrap();
+        board.place_mark(1, Mark::O).unwrap();
+        board.place_mark(3, Mark::X).unwrap();
+
+        let best = board.best_move(Mark::X);
+        assert_eq!(best, Some(2));
+    }
+
+    #[test]
+    fn test_best_move_empty_board() {
+        // On an empty board, any move is optimal
+        // Common strategy: center (4) or corner (0, 2, 6, 8)
+        let board = Board::new();
+        let best = board.best_move(Mark::X);
+        assert!(best.is_some());
+    }
+
+    #[test]
+    fn test_best_move_full_board() {
+        let mut board = Board::new();
+        for i in 0..9 {
+            board.place_mark(i, Mark::X).unwrap();
+        }
+        let best = board.best_move(Mark::X);
+        assert_eq!(best, None);
+    }
+
+    #[test]
+    fn test_minimax_detects_win() {
+        // X X _ / _ _ _ / _ _ _
+        // X to move: should evaluate to +1 (can win)
+        let mut board = Board::new();
+        board.place_mark(0, Mark::X).unwrap();
+        board.place_mark(1, Mark::X).unwrap();
+
+        let score = board.minimax(Mark::X, true);
+        assert_eq!(score, 1);
+    }
+
+    #[test]
+    fn test_minimax_detects_loss() {
+        // O O _ / X _ _ / _ _ _
+        // X to move: should evaluate to -1 if O gets to move next in that branch
+        // But X can block, so let's test a losing position
+        // O O O / X X _ / _ _ _ - O already won
+        let mut board = Board::new();
+        board.place_mark(0, Mark::O).unwrap();
+        board.place_mark(1, Mark::O).unwrap();
+        board.place_mark(2, Mark::O).unwrap();
+        board.place_mark(3, Mark::X).unwrap();
+        board.place_mark(4, Mark::X).unwrap();
+
+        let score = board.minimax(Mark::X, true);
+        assert_eq!(score, -1);
+    }
+
+    #[test]
+    fn test_minimax_detects_draw() {
+        // Near-draw position where best outcome is draw
+        // X O X / O X X / O X _
+        let mut board = Board::new();
+        board.place_mark(0, Mark::X).unwrap();
+        board.place_mark(1, Mark::O).unwrap();
+        board.place_mark(2, Mark::X).unwrap();
+        board.place_mark(3, Mark::O).unwrap();
+        board.place_mark(4, Mark::X).unwrap();
+        board.place_mark(5, Mark::X).unwrap();
+        board.place_mark(6, Mark::O).unwrap();
+        board.place_mark(7, Mark::X).unwrap();
+
+        let score = board.minimax(Mark::O, true);
+        assert_eq!(score, 0);
+    }
+
+    #[test]
+    fn test_ai_never_loses() {
+        // Test that if AI plays optimally from start, it never loses
+        // X (AI) plays first, O plays suboptimally but AI should draw or win
+        let mut board = Board::new();
+
+        // AI (X) plays first move
+        let best = board.best_move(Mark::X).unwrap();
+        board.place_mark(best, Mark::X).unwrap();
+
+        // O plays a corner (only if not already taken)
+        let o_move = if board.cells[0] == Cell::Empty { 0 } else { 2 };
+        board.place_mark(o_move, Mark::O).unwrap();
+
+        // AI plays second move
+        let best = board.best_move(Mark::X).unwrap();
+        board.place_mark(best, Mark::X).unwrap();
+
+        // Check that from this position, AI can at least draw
+        let score = board.minimax(Mark::X, true);
+        assert!(score >= 0, "AI should never lose from optimal play");
     }
 }
