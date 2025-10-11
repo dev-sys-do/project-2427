@@ -8,5 +8,8 @@ fn main() {
     
     println!("Starting web crawler...");
     println!("Target URL: {}", args.url);
-    println!("Web crawler initialized successfully!");
+    println!("Output directory: {}", args.output.display());
+    println!("Max depth: {}", args.depth);
+    println!("Workers: {}", args.workers);
+    println!("Web crawler configured successfully!");
 }
