@@ -117,3 +117,100 @@ impl Worker {
         Ok(links)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_work_item_creation() {
+        let url = Url::parse("https://example.com").unwrap();
+        let work_item = WorkItem {
+            url: url.clone(),
+            depth: 1,
+        };
+
+        assert_eq!(work_item.url, url);
+        assert_eq!(work_item.depth, 1);
+    }
+
+    #[test]
+    fn test_work_result_success() {
+        let url = Url::parse("https://example.com").unwrap();
+        let links = vec![Url::parse("https://example.com/page1").unwrap()];
+
+        let result = WorkResult {
+            url: url.clone(),
+            depth: 0,
+            links: links.clone(),
+            success: true,
+            error: None,
+        };
+
+        assert_eq!(result.url, url);
+        assert_eq!(result.depth, 0);
+        assert_eq!(result.links, links);
+        assert!(result.success);
+        assert!(result.error.is_none());
+    }
+
+    #[test]
+    fn test_work_result_failure() {
+        let url = Url::parse("https://example.com").unwrap();
+        let error_msg = "Network error".to_string();
+
+        let result = WorkResult {
+            url: url.clone(),
+            depth: 1,
+            links: Vec::new(),
+            success: false,
+            error: Some(error_msg.clone()),
+        };
+
+        assert_eq!(result.url, url);
+        assert_eq!(result.depth, 1);
+        assert!(result.links.is_empty());
+        assert!(!result.success);
+        assert_eq!(result.error, Some(error_msg));
+    }
+
+    #[tokio::test]
+    async fn test_worker_creation() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+
+        let worker = Worker::new(0, storage);
+        assert!(worker.is_ok());
+        assert_eq!(worker.unwrap().id, 0);
+    }
+
+    #[test]
+    fn test_work_item_clone() {
+        let url = Url::parse("https://example.com").unwrap();
+        let work_item = WorkItem {
+            url: url.clone(),
+            depth: 2,
+        };
+        let cloned = work_item.clone();
+
+        assert_eq!(work_item.url, cloned.url);
+        assert_eq!(work_item.depth, cloned.depth);
+    }
+
+    #[test]
+    fn test_work_result_debug() {
+        let url = Url::parse("https://example.com").unwrap();
+        let result = WorkResult {
+            url,
+            depth: 1,
+            links: Vec::new(),
+            success: true,
+            error: None,
+        };
+
+        let debug_str = format!("{:?}", result);
+        assert!(debug_str.contains("WorkResult"));
+        assert!(debug_str.contains("example.com"));
+    }
+}

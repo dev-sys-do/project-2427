@@ -57,3 +57,110 @@ impl Parser {
         Ok(links)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parser_creation() {
+        let parser = Parser::new();
+        assert!(parser.is_ok());
+    }
+
+    #[test]
+    fn test_extract_links_basic() {
+        let parser = Parser::new().unwrap();
+        let html = r##"
+            <html>
+                <body>
+                    <a href="/page1">Link 1</a>
+                    <a href="/page2">Link 2</a>
+                </body>
+            </html>
+        "##;
+        let base_url = Url::parse("https://example.com").unwrap();
+
+        let links = parser.extract_links(html, &base_url).unwrap();
+
+        assert_eq!(links.len(), 2);
+        assert!(links.contains(&Url::parse("https://example.com/page1").unwrap()));
+        assert!(links.contains(&Url::parse("https://example.com/page2").unwrap()));
+    }
+
+    #[test]
+    fn test_extract_links_filters_external() {
+        let parser = Parser::new().unwrap();
+        let html = r##"
+            <html>
+                <body>
+                    <a href="/internal">Internal Link</a>
+                    <a href="https://external.com/page">External Link</a>
+                    <a href="https://example.com/same-domain">Same Domain</a>
+                </body>
+            </html>
+        "##;
+        let base_url = Url::parse("https://example.com").unwrap();
+
+        let links = parser.extract_links(html, &base_url).unwrap();
+
+        assert_eq!(links.len(), 2);
+        assert!(links.contains(&Url::parse("https://example.com/internal").unwrap()));
+        assert!(links.contains(&Url::parse("https://example.com/same-domain").unwrap()));
+        assert!(
+            !links
+                .iter()
+                .any(|url| url.host_str() == Some("external.com"))
+        );
+    }
+
+    #[test]
+    fn test_extract_links_skips_fragments() {
+        let parser = Parser::new().unwrap();
+        let html = r##"
+            <html>
+                <body>
+                    <a href="/page1">Valid Link</a>
+                    <a href="#fragment">Fragment</a>
+                    <a href="">Empty</a>
+                </body>
+            </html>
+        "##;
+        let base_url = Url::parse("https://example.com").unwrap();
+
+        let links = parser.extract_links(html, &base_url).unwrap();
+
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0], Url::parse("https://example.com/page1").unwrap());
+    }
+
+    #[test]
+    fn test_extract_links_removes_duplicates() {
+        let parser = Parser::new().unwrap();
+        let html = r##"
+            <html>
+                <body>
+                    <a href="/page1">Link 1</a>
+                    <a href="/page1">Link 1 Again</a>
+                    <a href="/page2">Link 2</a>
+                </body>
+            </html>
+        "##;
+        let base_url = Url::parse("https://example.com").unwrap();
+
+        let links = parser.extract_links(html, &base_url).unwrap();
+
+        assert_eq!(links.len(), 2);
+    }
+
+    #[test]
+    fn test_extract_links_empty_html() {
+        let parser = Parser::new().unwrap();
+        let html = "<html><body></body></html>";
+        let base_url = Url::parse("https://example.com").unwrap();
+
+        let links = parser.extract_links(html, &base_url).unwrap();
+
+        assert_eq!(links.len(), 0);
+    }
+}

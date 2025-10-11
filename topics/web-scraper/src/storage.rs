@@ -84,3 +84,120 @@ fn sanitize_filename(input: &str) -> String {
         .trim_matches('.')
         .to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_storage_creation() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+        assert_eq!(storage.base_path, temp_dir.path());
+    }
+
+    #[tokio::test]
+    async fn test_storage_init() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().join("test_output"));
+
+        let result = storage.init().await;
+        assert!(result.is_ok());
+        assert!(storage.base_path.exists());
+    }
+
+    #[tokio::test]
+    async fn test_save_page() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+        storage.init().await.unwrap();
+
+        let url = Url::parse("https://example.com/page1").unwrap();
+        let content = "<html><body>Test content</body></html>";
+
+        let file_path = storage.save_page(&url, content, 0).await.unwrap();
+
+        assert!(file_path.exists());
+        let saved_content = tokio::fs::read_to_string(&file_path).await.unwrap();
+        assert_eq!(saved_content, content);
+    }
+
+    #[test]
+    fn test_url_to_path_root() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+
+        let url = Url::parse("https://example.com/").unwrap();
+        let path = storage.url_to_path(&url, 0).unwrap();
+
+        let expected = temp_dir
+            .path()
+            .join("depth_0")
+            .join("example.com")
+            .join("index.html");
+        assert_eq!(path, expected);
+    }
+
+    #[test]
+    fn test_url_to_path_with_path() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+
+        let url = Url::parse("https://example.com/blog/post1").unwrap();
+        let path = storage.url_to_path(&url, 1).unwrap();
+
+        let expected = temp_dir
+            .path()
+            .join("depth_1")
+            .join("example.com")
+            .join("blog")
+            .join("post1.html");
+        assert_eq!(path, expected);
+    }
+
+    #[test]
+    fn test_url_to_path_depth_organization() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+
+        let url = Url::parse("https://example.com/test").unwrap();
+
+        let path_depth_0 = storage.url_to_path(&url, 0).unwrap();
+        let path_depth_2 = storage.url_to_path(&url, 2).unwrap();
+
+        assert!(path_depth_0.to_string_lossy().contains("depth_0"));
+        assert!(path_depth_2.to_string_lossy().contains("depth_2"));
+    }
+
+    #[test]
+    fn test_sanitize_filename() {
+        assert_eq!(sanitize_filename("normal"), "normal");
+        assert_eq!(sanitize_filename("with/slash"), "with_slash");
+        assert_eq!(sanitize_filename("with:colon"), "with_colon");
+        assert_eq!(sanitize_filename("with*star"), "with_star");
+        assert_eq!(sanitize_filename("with?question"), "with_question");
+        assert_eq!(sanitize_filename("with\"quote"), "with_quote");
+        assert_eq!(sanitize_filename("with<greater>"), "with_greater_");
+        assert_eq!(sanitize_filename("with|pipe"), "with_pipe");
+        assert_eq!(sanitize_filename(".hidden."), "hidden");
+    }
+
+    #[tokio::test]
+    async fn test_save_page_creates_directories() {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path().to_path_buf());
+        storage.init().await.unwrap();
+
+        let url = Url::parse("https://example.com/deep/nested/path").unwrap();
+        let content = "test content";
+
+        let file_path = storage.save_page(&url, content, 1).await.unwrap();
+
+        assert!(file_path.exists());
+        assert!(file_path.parent().unwrap().exists());
+
+        let saved_content = tokio::fs::read_to_string(&file_path).await.unwrap();
+        assert_eq!(saved_content, content);
+    }
+}
