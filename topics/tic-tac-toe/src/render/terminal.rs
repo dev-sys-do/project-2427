@@ -2,11 +2,13 @@ use crate::board::{Board, Cell, Player};
 use crate::game::GameState;
 use std::io::{self, Write};
 
+/// Clears the terminal screen using ANSI escape codes
 pub fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
     io::stdout().flush().unwrap();
 }
 
+/// Displays the game title banner
 pub fn display_title() {
     println!("╔═══════════════════════════════════════╗");
     println!("║                                       ║");
@@ -16,6 +18,7 @@ pub fn display_title() {
     println!();
 }
 
+/// Displays the current board state with Unicode box-drawing characters
 pub fn display_board(board: &Board) {
     println!();
     println!("     ╔═══╦═══╦═══╗");
@@ -38,6 +41,7 @@ pub fn display_board(board: &Board) {
     println!();
 }
 
+/// Displays the position guide to help players
 pub fn display_position_guide() {
     println!("  How to play: Enter a number from 1 to 9");
     println!();
@@ -61,7 +65,7 @@ fn get_cell_display(board: &Board, position: usize) -> String {
     }
 }
 
-/// Prompts the player for their move
+/// Prompts the player for their move and validates input
 pub fn get_player_move(board: &Board) -> usize {
     loop {
         print!("  > Enter your move (1-9): ");
@@ -72,7 +76,6 @@ pub fn get_player_move(board: &Board) -> usize {
             .read_line(&mut input)
             .expect("Failed to read input");
 
-        // Parse the input
         let position: usize = match input.trim().parse::<usize>() {
             Ok(num) if (1..=9).contains(&num) => num - 1,
             _ => {
@@ -81,7 +84,6 @@ pub fn get_player_move(board: &Board) -> usize {
             }
         };
 
-        // Check if the position is empty
         if let Some(cell) = board.get(position) {
             if cell.is_empty() {
                 return position;
@@ -93,7 +95,7 @@ pub fn get_player_move(board: &Board) -> usize {
     }
 }
 
-/// Displays the game status
+/// Displays the game outcome
 pub fn display_game_status(state: GameState) {
     println!();
     match state {
@@ -125,7 +127,7 @@ pub fn display_game_status(state: GameState) {
     println!();
 }
 
-/// Displays a move notification
+/// Displays a move notification (unused but available)
 #[allow(dead_code)]
 pub fn display_move(player: Player, position: usize) {
     let symbol = player.symbol();
@@ -161,12 +163,13 @@ pub fn ask_play_again() -> bool {
     }
 }
 
+/// Displays a separator line (unused but available)
 #[allow(dead_code)]
 pub fn display_separator() {
     println!("  ─────────────────────────────────────────");
 }
 
-/// Displays a waiting message for AI
+/// Displays an animation while the AI is thinking
 pub fn display_ai_thinking() {
     print!("  Opponent is playing");
     io::stdout().flush().unwrap();

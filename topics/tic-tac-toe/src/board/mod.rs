@@ -1,3 +1,5 @@
+pub mod lines;
+
 /// Represents a player in the game
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Player {
@@ -6,7 +8,6 @@ pub enum Player {
 }
 
 impl Player {
-    #[allow(dead_code)]
     pub fn opponent(self) -> Self {
         match self {
             Player::Human => Player::Ai,
@@ -14,6 +15,7 @@ impl Player {
         }
     }
 
+    /// Returns the symbol for this player
     pub fn symbol(self) -> char {
         match self {
             Player::Human => 'X',
@@ -22,7 +24,6 @@ impl Player {
     }
 }
 
-/// Represents a cell on the board
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Cell {
     Empty,
@@ -30,19 +31,18 @@ pub enum Cell {
 }
 
 impl Cell {
+    /// Returns true if the cell is empty
     pub fn is_empty(self) -> bool {
         matches!(self, Cell::Empty)
     }
 }
 
-/// Represents the game board (3x3 grid)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Board {
     cells: [Cell; 9],
 }
 
 impl Board {
-    /// Creates a new empty board
     pub fn new() -> Self {
         Self {
             cells: [Cell::Empty; 9],
@@ -70,7 +70,6 @@ impl Board {
     }
 
     /// Returns an iterator over all empty positions on the board
-    #[allow(dead_code)]
     pub fn empty_positions(&self) -> impl Iterator<Item = usize> + '_ {
         self.cells
             .iter()
@@ -83,7 +82,7 @@ impl Board {
         self.cells.iter().all(|cell| !cell.is_empty())
     }
 
-    /// Displays the board
+    /// Displays the board (simple ASCII version)
     #[allow(dead_code)]
     pub fn display(&self) {
         println!(
@@ -109,7 +108,6 @@ impl Board {
     }
 
     /// Returns the character to display for a cell
-    #[allow(dead_code)]
     fn cell_char(&self, position: usize) -> char {
         match self.cells[position] {
             Cell::Empty => (b'1' + position as u8) as char,

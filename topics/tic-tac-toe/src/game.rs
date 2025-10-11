@@ -1,4 +1,4 @@
-use crate::board::{Board, Cell, Player};
+use crate::board::{lines::WINNING_LINES, Board, Cell, Player};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameState {
@@ -7,22 +7,6 @@ pub enum GameState {
     Draw,
 }
 
-/// All possible winning combinations (rows, columns, diagonals)
-const WINNING_LINES: [[usize; 3]; 8] = [
-    // Rows
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    // Columns
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    // Diagonals
-    [0, 4, 8],
-    [2, 4, 6],
-];
-
-/// Checks the current state of the game
 pub fn check_game_state(board: &Board) -> GameState {
     for line in &WINNING_LINES {
         if let Some(winner) = check_line(board, line) {

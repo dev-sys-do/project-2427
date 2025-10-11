@@ -10,7 +10,6 @@ fn test_initial_state() {
 #[test]
 fn test_horizontal_win_top() {
     let mut board = Board::new();
-    // X wins on top row
     board.set(0, Player::Human);
     board.set(1, Player::Human);
     board.set(2, Player::Human);
@@ -21,7 +20,6 @@ fn test_horizontal_win_top() {
 #[test]
 fn test_horizontal_win_middle() {
     let mut board = Board::new();
-    // O wins on middle row
     board.set(3, Player::Ai);
     board.set(4, Player::Ai);
     board.set(5, Player::Ai);
@@ -32,7 +30,6 @@ fn test_horizontal_win_middle() {
 #[test]
 fn test_horizontal_win_bottom() {
     let mut board = Board::new();
-    // X wins on bottom row
     board.set(6, Player::Human);
     board.set(7, Player::Human);
     board.set(8, Player::Human);
@@ -43,7 +40,6 @@ fn test_horizontal_win_bottom() {
 #[test]
 fn test_vertical_win_left() {
     let mut board = Board::new();
-    // O wins on left column
     board.set(0, Player::Ai);
     board.set(3, Player::Ai);
     board.set(6, Player::Ai);
@@ -54,7 +50,6 @@ fn test_vertical_win_left() {
 #[test]
 fn test_vertical_win_middle() {
     let mut board = Board::new();
-    // X wins on middle column
     board.set(1, Player::Human);
     board.set(4, Player::Human);
     board.set(7, Player::Human);
@@ -65,7 +60,6 @@ fn test_vertical_win_middle() {
 #[test]
 fn test_vertical_win_right() {
     let mut board = Board::new();
-    // O wins on right column
     board.set(2, Player::Ai);
     board.set(5, Player::Ai);
     board.set(8, Player::Ai);
@@ -76,7 +70,6 @@ fn test_vertical_win_right() {
 #[test]
 fn test_diagonal_win_main() {
     let mut board = Board::new();
-    // X wins on main diagonal (top-left to bottom-right)
     board.set(0, Player::Human);
     board.set(4, Player::Human);
     board.set(8, Player::Human);
@@ -87,7 +80,6 @@ fn test_diagonal_win_main() {
 #[test]
 fn test_diagonal_win_anti() {
     let mut board = Board::new();
-    // O wins on anti-diagonal (top-right to bottom-left)
     board.set(2, Player::Ai);
     board.set(4, Player::Ai);
     board.set(6, Player::Ai);
@@ -98,10 +90,6 @@ fn test_diagonal_win_anti() {
 #[test]
 fn test_draw() {
     let mut board = Board::new();
-    // Create a draw scenario
-    // X O X
-    // X O O
-    // O X X
     board.set(0, Player::Human);
     board.set(1, Player::Ai);
     board.set(2, Player::Human);
@@ -127,10 +115,6 @@ fn test_in_progress() {
 #[test]
 fn test_in_progress_almost_full() {
     let mut board = Board::new();
-    // Board with 8 positions filled but no winner
-    // X O X
-    // O X O
-    // O X _
     board.set(0, Player::Human);
     board.set(1, Player::Ai);
     board.set(2, Player::Human);
@@ -139,7 +123,6 @@ fn test_in_progress_almost_full() {
     board.set(5, Player::Ai);
     board.set(6, Player::Ai);
     board.set(7, Player::Human);
-    // Position 8 is empty
 
     assert_eq!(check_game_state(&board), GameState::InProgress);
 }

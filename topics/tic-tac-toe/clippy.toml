@@ -1,0 +1,6 @@
+# Clippy configuration for strict linting
+
+# Deny common issues
+cognitive-complexity-threshold = 15
+too-many-arguments-threshold = 5
+type-complexity-threshold = 150

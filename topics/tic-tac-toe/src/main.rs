@@ -2,9 +2,10 @@
 ///
 /// This program allows a human player to play against an AI opponent
 /// that uses the Minimax algorithm to play optimally.
+use tic_tac_toe::ai::find_best_move;
 use tic_tac_toe::board::{Board, Player};
 use tic_tac_toe::game::{check_game_state, GameState};
-use tic_tac_toe::ui::{
+use tic_tac_toe::render::{
     ask_play_again, clear_screen, display_ai_thinking, display_board, display_game_status,
     display_position_guide, display_title, get_player_move,
 };
@@ -58,23 +59,13 @@ fn run_game() -> bool {
             return ask_play_again();
         }
 
-        // AI player's turn (placeholder - random move for now)
         clear_screen();
         display_title();
         display_board(&board);
         display_ai_thinking();
-        let ai_position = make_ai_move(&board);
-        board.set(ai_position, Player::Ai);
+
+        if let Some(ai_position) = find_best_move(&board, Player::Ai) {
+            board.set(ai_position, Player::Ai);
+        }
     }
-}
-
-/// Makes an AI move (placeholder implementation - will be replaced with Minimax)
-/// Currently makes a random valid move
-fn make_ai_move(board: &Board) -> usize {
-    // Find all empty positions
-    let empty_positions: Vec<usize> = board.empty_positions().collect();
-
-    // For now, just pick the first empty position
-    // This will be replaced with Minimax algorithm
-    empty_positions[0]
 }
