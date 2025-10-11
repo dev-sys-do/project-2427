@@ -34,7 +34,7 @@ impl Worker {
     pub fn new(id: usize, storage: Storage) -> Result<Self> {
         let downloader = Downloader::new()?;
         let parser = HtmlParser::new()?;
-        
+
         Ok(Worker {
             id,
             downloader,
@@ -42,7 +42,7 @@ impl Worker {
             storage,
         })
     }
-    
+
     /// Start the worker loop
     pub async fn run(
         mut self,
@@ -50,24 +50,24 @@ impl Worker {
         sender: mpsc::Sender<WorkResult>,
     ) {
         println!("Worker {} started", self.id);
-        
+
         while let Some(work_item) = receiver.recv().await {
             let result = self.process_work_item(work_item).await;
-            
+
             if let Err(e) = sender.send(result).await {
                 eprintln!("Worker {} failed to send result: {}", self.id, e);
                 break;
             }
         }
-        
+
         println!("Worker {} shutting down", self.id);
     }
-    
+
     /// Process a single work item
     async fn process_work_item(&mut self, work_item: WorkItem) -> WorkResult {
         let url = work_item.url.clone();
         let depth = work_item.depth;
-        
+
         match self.download_and_process(&work_item).await {
             Ok(links) => WorkResult {
                 url,
@@ -78,7 +78,10 @@ impl Worker {
             },
             Err(e) => {
                 let error_msg = format!("{}", e);
-                eprintln!("Worker {} failed to process {}: {}", self.id, url, error_msg);
+                eprintln!(
+                    "Worker {} failed to process {}: {}",
+                    self.id, url, error_msg
+                );
                 WorkResult {
                     url,
                     depth,
@@ -89,21 +92,28 @@ impl Worker {
             }
         }
     }
-    
+
     /// Download and process a single page
     async fn download_and_process(&mut self, work_item: &WorkItem) -> Result<Vec<Url>> {
         // Download the page
         let page = self.downloader.download(work_item.url.clone()).await?;
-        
+
         // Save the page
-        self.storage.save_page(&page.url, &page.content, work_item.depth).await?;
-        
+        self.storage
+            .save_page(&page.url, &page.content, work_item.depth)
+            .await?;
+
         // Extract links
         let links = self.parser.extract_links(&page.content, &page.url)?;
-        
-        println!("Worker {} processed {} (depth {}) - found {} links", 
-                 self.id, page.url, work_item.depth, links.len());
-        
+
+        println!(
+            "Worker {} processed {} (depth {}) - found {} links",
+            self.id,
+            page.url,
+            work_item.depth,
+            links.len()
+        );
+
         Ok(links)
     }
 }

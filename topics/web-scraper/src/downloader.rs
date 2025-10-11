@@ -21,27 +21,24 @@ impl Downloader {
             .timeout(Duration::from_secs(30))
             .user_agent("webcrawl/0.1.0")
             .build()?;
-        
+
         Ok(Downloader { client })
     }
-    
+
     /// Download a page from the given URL
     pub async fn download(&self, url: Url) -> Result<Page> {
         println!("Downloading: {}", url);
-        
+
         let response = self.client.get(url.clone()).send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow::anyhow!("HTTP error {}: {}", response.status(), url));
         }
-        
+
         let content = response.text().await?;
-        
+
         println!("Downloaded {} bytes from {}", content.len(), url);
-        
-        Ok(Page {
-            url,
-            content,
-        })
+
+        Ok(Page { url, content })
     }
 }
