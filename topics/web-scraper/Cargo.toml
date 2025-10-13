@@ -1,0 +1,16 @@
+[package]
+name = "webcrawl"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+url = "2.4"
+tokio = { version = "1.0", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+anyhow = "1.0"
+scraper = "0.17"
+
+[dev-dependencies]
+tempfile = "3.0"
+tokio-test = "0.4"
