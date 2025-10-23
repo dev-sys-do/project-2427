@@ -1,21 +1,28 @@
 mod board;
+mod game;
 
-use board::{Board, Player};
+use game::{Game, GameState};
 
 fn main() {
-    println!("=== Tic-Tac-Toe Board Demo ===\n");
+    println!("=== Tic-Tac-Toe ===");
+    println!("Simple demonstration of the game logic\n");
     
-    let mut board = Board::new();
+    let mut game = Game::new();
     
-    println!("Empty board:");
-    board.display();
+    // Show initial empty board
+    println!("Initial board:");
+    game.display_board();
     
-    // Demo: Place some moves to show the board in action
-    println!("Demo: Placing some moves...");
-    board.place_move(5, Player::X);
-    board.place_move(1, Player::O);
-    board.place_move(9, Player::X);
-    board.display();
+    // Make a few moves to demonstrate
+    println!("Making some sample moves...");
+    game.make_move(5); // X center
+    game.make_move(1); // O top-left
+    game.make_move(9); // X bottom-right
     
-    println!("Run 'cargo test' to see all the unit tests for the board functionality!");
+    game.display_board();
+    println!("Current player: {:?}", game.get_current_player());
+    println!("Game state: {:?}", game.get_state());
+    println!("Available moves: {:?}", game.get_available_moves());
+    
+    println!("\n🎮 Run 'cargo test' to see all unit tests!");
 }
