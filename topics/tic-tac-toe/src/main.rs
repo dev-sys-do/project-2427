@@ -1,7 +1,7 @@
+mod ai;
 mod board;
 mod game;
 mod ui;
-mod ai;
 
 use ui::UI;
 
