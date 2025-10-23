@@ -29,7 +29,7 @@ impl Game {
     /// Returns true if the move was successful, false otherwise
     pub fn make_move(&mut self, position: usize) -> bool {
         if self.state != GameState::InProgress {
-            return false; // Game is already over
+            return false;
         }
 
         if self.board.place_move(position, self.current_player) {
@@ -86,7 +86,6 @@ impl Game {
 
     /// Checks if there's a winner and returns the winning player
     pub fn check_winner(&self) -> Option<Player> {
-        // Winning combinations (indices 0-8)
         let winning_combinations = [
             // Rows
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -97,7 +96,6 @@ impl Game {
         ];
 
         for combo in &winning_combinations {
-            // Convert to 1-based positions for board.get_cell()
             let pos1 = combo[0] + 1;
             let pos2 = combo[1] + 1;
             let pos3 = combo[2] + 1;
@@ -171,7 +169,7 @@ mod tests {
         
         // Try to play same position
         assert!(!game.make_move(5));
-        assert_eq!(game.current_player, Player::O); // Should still be O's turn
+        assert_eq!(game.current_player, Player::O);
         
         // Try invalid position
         assert!(!game.make_move(0));
@@ -192,7 +190,6 @@ mod tests {
         assert_eq!(game.state, GameState::Won(Player::X));
         assert_eq!(game.get_available_moves().len(), 0);
         
-        // No more moves should be allowed
         assert!(!game.make_move(6));
     }
 
@@ -222,12 +219,10 @@ mod tests {
     fn test_is_valid_move() {
         let mut game = Game::new();
         
-        // All positions should be valid initially
         for pos in 1..=9 {
             assert!(game.is_valid_move(pos));
         }
         
-        // After a move, that position should be invalid
         game.make_move(5);
         assert!(!game.is_valid_move(5));
         assert!(game.is_valid_move(1));
@@ -241,15 +236,12 @@ mod tests {
     fn test_reset_game() {
         let mut game = Game::new();
         
-        // Make some moves
         game.make_move(1);
         game.make_move(2);
         game.make_move(3);
         
-        // Reset
         game.reset();
         
-        // Should be back to initial state
         assert_eq!(game.current_player, Player::X);
         assert_eq!(game.state, GameState::InProgress);
         assert_eq!(game.get_available_moves().len(), 9);
@@ -268,7 +260,6 @@ mod tests {
         
         assert_eq!(game.state, GameState::Won(Player::X));
         
-        // No more moves allowed after win
         assert!(!game.is_valid_move(4));
         assert_eq!(game.get_available_moves().len(), 0);
     }
@@ -277,7 +268,6 @@ mod tests {
     fn test_check_winner_horizontal() {
         let mut game = Game::new();
         
-        // Test first row win for X
         game.make_move(1); // X
         game.make_move(4); // O
         game.make_move(2); // X
@@ -285,7 +275,6 @@ mod tests {
         game.make_move(3); // X wins
         assert_eq!(game.check_winner(), Some(Player::X));
         
-        // Test second row win for O
         let mut game = Game::new();
         game.make_move(1); // X
         game.make_move(4); // O
@@ -295,7 +284,6 @@ mod tests {
         game.make_move(6); // O wins
         assert_eq!(game.check_winner(), Some(Player::O));
         
-        // Test third row win for X
         let mut game = Game::new();
         game.make_move(7); // X
         game.make_move(1); // O
@@ -307,7 +295,6 @@ mod tests {
 
     #[test]
     fn test_check_winner_vertical() {
-        // Test first column win for X
         let mut game = Game::new();
         game.make_move(1); // X
         game.make_move(2); // O
@@ -316,7 +303,6 @@ mod tests {
         game.make_move(7); // X wins
         assert_eq!(game.check_winner(), Some(Player::X));
         
-        // Test second column win for O
         let mut game = Game::new();
         game.make_move(1); // X
         game.make_move(2); // O
@@ -326,7 +312,6 @@ mod tests {
         game.make_move(8); // O wins
         assert_eq!(game.check_winner(), Some(Player::O));
         
-        // Test third column win for X
         let mut game = Game::new();
         game.make_move(3); // X
         game.make_move(1); // O
@@ -338,7 +323,6 @@ mod tests {
 
     #[test]
     fn test_check_winner_diagonal() {
-        // Test main diagonal win for X (top-left to bottom-right)
         let mut game = Game::new();
         game.make_move(1); // X
         game.make_move(2); // O
@@ -347,7 +331,6 @@ mod tests {
         game.make_move(9); // X wins
         assert_eq!(game.check_winner(), Some(Player::X));
         
-        // Test anti-diagonal win for O (top-right to bottom-left)
         let mut game = Game::new();
         game.make_move(1); // X
         game.make_move(3); // O
@@ -362,16 +345,13 @@ mod tests {
     fn test_check_winner_no_winner() {
         let mut game = Game::new();
         
-        // Empty game should have no winner
         assert_eq!(game.check_winner(), None);
         
-        // Incomplete lines should have no winner
         game.make_move(1); // X
         game.make_move(2); // O
         game.make_move(4); // X
         assert_eq!(game.check_winner(), None);
         
-        // Mixed lines should have no winner
         game.make_move(3); // O
         assert_eq!(game.check_winner(), None);
     }
@@ -380,15 +360,12 @@ mod tests {
     fn test_is_game_over() {
         let mut game = Game::new();
         
-        // Game should not be over at start
         assert!(!game.is_game_over());
         
-        // Game should not be over with partial moves
         game.make_move(1); // X
         game.make_move(5); // O
         assert!(!game.is_game_over());
         
-        // Game should be over when someone wins
         game.make_move(2); // X
         game.make_move(6); // O
         game.make_move(3); // X wins
@@ -400,7 +377,6 @@ mod tests {
     fn test_is_game_over_full_board() {
         let mut game = Game::new();
         
-        // Fill board without winner (draw scenario)
         // X O X
         // O X X
         // O X O
