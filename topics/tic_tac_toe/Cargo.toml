@@ -1,0 +1,9 @@
+[package]
+name = "tic_tac_toe"
+version = "0.1.0"
+edition = "2021"
+authors = ["evan.paillard@etu.umontpellier.fr"]
+description = "A command-line Tic Tac Toe game with an unbeatable AI using the Minimax algorithm"
+
+[dependencies]
+rand = "0.8.5"  
