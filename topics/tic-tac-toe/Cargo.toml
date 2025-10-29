@@ -1,0 +1,11 @@
+[package]
+name = "tic-tac-toe"
+version = "0.1.0"
+edition = "2021"
+description = "A command-line tic-tac-toe game with AI opponent using minimax algorithm"
+
+[[bin]]
+name = "tic-tac-toe"
+path = "src/main.rs"
+
+[dependencies]
