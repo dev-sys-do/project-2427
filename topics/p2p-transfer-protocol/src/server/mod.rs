@@ -65,9 +65,8 @@ fn receive_file(
     stream: &mut TcpStream,
     expected_file_size: u64,
 ) -> io::Result<()> {
-
     let mut sized_stream = io::Read::take(stream, expected_file_size);
-    
+
     let bytes_copied = copy(&mut sized_stream, file)?;
     file.flush()?;
 
@@ -80,7 +79,6 @@ fn receive_file(
             ),
         ));
     }
-
 
     info!(
         "File received successfully, {} bytes written.",
@@ -110,7 +108,7 @@ fn message_loop(state_machine: &mut StateMachine, stream: &mut TcpStream) -> Res
         // FIXME: Do not use unwrap, fix the result type mess.
         match on_message(message.unwrap(), state_machine) {
             Some(resp) => send_message(&mut writer_stream, &resp)?,
-            None => {}, // No response is needed
+            None => {} // No response is needed
         }
         // If we are in Established state, stop the line-based logic and receive the data.
         if let ConnectionState::Established = state_machine.current_state() {

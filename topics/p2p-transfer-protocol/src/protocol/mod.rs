@@ -31,12 +31,12 @@ impl StateMachine {
             (ConnectionState::HelloReceived, ConnectionState::NACKSent) => {}
             (ConnectionState::HelloReceived, ConnectionState::ACKSent) => {}
             (ConnectionState::ACKSent, ConnectionState::Established) => {}
-            
+
             (ConnectionState::Closed, ConnectionState::HelloSent) => {}
             (ConnectionState::HelloSent, ConnectionState::NACKReceived) => {}
             (ConnectionState::HelloSent, ConnectionState::ACKReceived) => {}
             (ConnectionState::ACKReceived, ConnectionState::Established) => {}
-            
+
             (s, _) => {
                 warn!(
                     "Invalid state transition from {:?} to {:?}, ignoring.",

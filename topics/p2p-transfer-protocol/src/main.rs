@@ -3,7 +3,10 @@ mod protocol;
 mod server;
 
 use std::{
-    fs::{File, OpenOptions}, io, net::{TcpListener, TcpStream}, process::exit
+    fs::{File, OpenOptions},
+    io,
+    net::{TcpListener, TcpStream},
+    process::exit,
 };
 
 use clap::{Parser, Subcommand};
@@ -43,16 +46,19 @@ fn main() {
     let cli = Cli::parse();
     // Note: if no command matches, clap automatically provides the help message & exits.
     match cli.command {
-        Commands::Listen { bind, output_file: output } => {
+        Commands::Listen {
+            bind,
+            output_file: output,
+        } => {
             let _ = server_mode(&bind, &output);
         }
-        Commands::Send { file, server: remote_addr } => {
-            
-            match client_mode(&file, &remote_addr) {
-                Ok(_) => info!("File sent successfully"),
-                Err(e) => error!("Failed to send file: {}", e),
-            }
-        }
+        Commands::Send {
+            file,
+            server: remote_addr,
+        } => match client_mode(&file, &remote_addr) {
+            Ok(_) => info!("File sent successfully"),
+            Err(e) => error!("Failed to send file: {}", e),
+        },
     }
 }
 
@@ -98,7 +104,6 @@ fn server_mode(bind_addr: &str, file_path: &str) -> io::Result<()> {
     Ok(())
 }
 
-
 fn client_mode(file_path: &str, remote_addr: &str) -> io::Result<()> {
     // Open input file
     let file = File::open(file_path)?;
@@ -113,7 +118,6 @@ fn client_mode(file_path: &str, remote_addr: &str) -> io::Result<()> {
         }
     };
     info!("Connected to {}", remote_addr);
-
 
     client::run_client(file, stream)
 }

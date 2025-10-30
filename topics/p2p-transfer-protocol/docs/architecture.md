@@ -1,8 +1,29 @@
-## 
-TODO: Project definition: What is it? What are the goals of the tool/project?
+## p2p-transfert-protocol
+A simple text-based protocol for file transfert.
+This tool includes both a client and a single threaded server implementation.
+
+By default, the server listens on `[::]:0`. This can 
 
 ## Usage
-How can one use it? Give usage examples.
+
+Via cargo run:
+
+```bash
+cargo run listen [--bind] [--output-file]
+cargo run send <--server HOST> <--file FILE>
+```
+
+Or by building a binary: `cargo build --release` (`./target/release/p2p-transfert-protocol`)
+
+### Logging
+
+This project uses `env_logger` for logging.
+For debug output (eg. the state machine's transition), set `RUST_LOG=debug`:
+
+```bash
+RUST_LOG=debug cargo run listen [--bind] [--output-file]
+RUST_LOG=debug  cargo run send <--server HOST> <--file FILE>
+```
 
 
 ## Modules
@@ -11,9 +32,10 @@ The project is structured around three main modules:
 - The "client" module
 - The generic protocol library, containing shared serialization/deserialization logic, as well as the FSM (Finite State Machine) driving the protocol's state.
 
-Note: for simplicity's sake, we use "client" to refer to the active opener, that is, the peer that sends the `HELLO` message.
+## Limitations
 
-## Seperations of concerns and limitations of this protocol
+### Separation of concerns and limitations of this protocol
+
 This protocol is intended as an Layer 7/Application-level protocol.
 
 Hence, the underlying protocol stack is assumed :
@@ -27,43 +49,13 @@ Hence, the underlying protocol stack is assumed :
   - As this protocol uses the same channel for data and control, it technically suffers from head-of-line blocking. 
     - In this context this however is an non-issue, given that only one file per connection can be transmitted and that resuming is not supported.
 
-This implementation uses TCP as its transport protocol, which provides reliablility and weak integrity guarantees, but no confidentiality nor protection against tempering of the payload.
+
+### Limitation of this implementation
+- This implementation uses TCP as its transport protocol, which provides reliablility and weak integrity guarantees, but no confidentiality nor protection against tempering of the payload. 
 Such a guarantee could be achieved by encapsulating this protocol in TLS.
+- The serialization/deserialization logic could be simplified using serde
+- The server is singlethreaded.
 
-Another interesting possibility would be to use QUIC as the transport protocol, which could allow connection reuse, multiplexing (using streams), as well as lower latency (by merging the transport and crypto establishement as a single step).
-Latency could be futher reduced by sending the HELLO packet as a 0-RTT packet on futher connections.
-
-
-## Protocol description
-
-### States
-#### Initial states
-- LISTENING (passive opener)
-- HELLO_SENT
-
-#### Transition states
-- HELLO_RECEIVED
-- ACK_SENT
-- ACK_RECEIVED
-- ESTABLISHED
-
-#### Final states
-- NACK_RECEIVED
-- (Implicit teardown)
-
-## Messages
-- HELLO
-- ACK
-- NACK
-- SEND
-
-## Messages
-- HELLO: For the sender to offer a file to the receiver. It takes a file size argument.
-- ACK: For the receiver to tell the sender it is ready to receive a proposed file.
-- NACK: For the receiver to reject a proposed file.
-- SEND: Send, for the sender to actually send a file. It also takes a file size argument, that must match the HELLO offer.
-
-
-## Limitations & futher work
-- The serialization/deserialization logic could be simplified using serde.
-- 
+## Potential work
+An interesting possibility would be to use QUIC as the transport protocol, which could allow connection reuse, multiplexing (using streams), as well as lower latency (by merging the transport and crypto establishement as a single step).
+Latency could be futher reduced by sending the HELLO packet as a 0-RTT packet on futher connections. 
