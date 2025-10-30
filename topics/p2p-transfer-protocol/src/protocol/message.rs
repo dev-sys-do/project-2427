@@ -1,10 +1,7 @@
 use log::error;
 use std::{fmt::Display, str::FromStr};
-#[cfg(test)]
-use strum::EnumIter;
 
 #[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(test, derive(EnumIter))]
 pub enum Message {
     Hello { file_size: u64 },
     ACK,
