@@ -1,20 +1,16 @@
-use std::{fmt::Display, str::FromStr};
-use std::io::Write;
 use log::error;
+use std::{fmt::Display, str::FromStr};
 #[cfg(test)]
 use strum::EnumIter;
 
 #[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(test,derive(EnumIter))]
+#[cfg_attr(test, derive(EnumIter))]
 pub enum Message {
-    Hello {
-        file_size: u64
-    },
+    Hello { file_size: u64 },
     ACK,
     NACK,
-    Send
+    Send,
 }
-
 
 // Wire format
 impl Display for Message {
@@ -27,7 +23,6 @@ impl Display for Message {
         }
     }
 }
-
 
 impl FromStr for Message {
     type Err = ();
@@ -48,7 +43,7 @@ impl FromStr for Message {
             return Err(());
         };
 
-        // No arguments msgs        
+        // No arguments msgs
         return match upper.as_str() {
             "ACK" => Ok(Message::ACK),
             "NACK" => Ok(Message::NACK),

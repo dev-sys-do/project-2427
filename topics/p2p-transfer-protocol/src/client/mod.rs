@@ -1,12 +1,11 @@
-use std::io::{self, Read, Write, BufRead, BufReader};
-use std::net::TcpStream;
-use std::fs::File;
 use log::{debug, info, warn};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader, Read, Write};
+use std::net::TcpStream;
 
 use crate::protocol::StateMachine;
-use crate::protocol::message::Message;
 use crate::protocol::connection_state::ConnectionState;
-
+use crate::protocol::message::Message;
 
 pub fn run_client(mut file: File, mut stream: TcpStream) -> io::Result<()> {
     let file_size = file.metadata()?.len();
@@ -18,7 +17,7 @@ pub fn run_client(mut file: File, mut stream: TcpStream) -> io::Result<()> {
     // Send HELLO
     let hello_msg = Message::Hello { file_size }.to_string();
     stream.write_all(hello_msg.as_bytes())?;
-    sm.transition(&ConnectionState::HelloSent);
+    sm.transition(ConnectionState::HelloSent);
     debug!("Sent HELLO");
 
     // Wait for ACK/NACK
@@ -29,11 +28,11 @@ pub fn run_client(mut file: File, mut stream: TcpStream) -> io::Result<()> {
     match response.parse::<Message>() {
         Ok(Message::ACK) => {
             debug!("Received ACK");
-            sm.transition(&ConnectionState::ACKReceived);
+            sm.transition(ConnectionState::ACKReceived);
         }
         Ok(Message::NACK) => {
             debug!("Received NACK");
-            sm.transition(&ConnectionState::NACKReceived);
+            sm.transition(ConnectionState::NACKReceived);
             return Ok(());
         }
         _ => {
@@ -45,8 +44,8 @@ pub fn run_client(mut file: File, mut stream: TcpStream) -> io::Result<()> {
     // Start sending data
     let send_msg = Message::Send.to_string();
     stream.write_all(send_msg.as_bytes())?;
-    sm.transition(&ConnectionState::Established);
-    
+    sm.transition(ConnectionState::Established);
+
     debug!("Sending data.");
 
     // Send file data in 4kB chunks
@@ -54,13 +53,15 @@ pub fn run_client(mut file: File, mut stream: TcpStream) -> io::Result<()> {
 
     loop {
         let n = file.read(&mut buffer)?;
-        if n == 0 { break; } // EOF
+        if n == 0 {
+            break;
+        } // EOF
         stream.write_all(&buffer[..n])?;
     }
     // Flush to ensure all data is sent
     stream.flush()?;
     info!("File sent successfully");
-    sm.transition(&ConnectionState::Closed);
+    sm.transition(ConnectionState::Closed);
     // Close socket
     stream.shutdown(std::net::Shutdown::Both)?;
     debug!("Transfer complete");
