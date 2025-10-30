@@ -32,9 +32,10 @@ impl FromStr for Message {
         if upper.starts_with("HELLO") {
             let parts: Vec<&str> = s.split_whitespace().collect();
             if parts.len() == 2
-                && let Ok(file_size) = parts[1].parse::<u64>() {
-                    return Ok(Message::Hello { file_size });
-                }
+                && let Ok(file_size) = parts[1].parse::<u64>()
+            {
+                return Ok(Message::Hello { file_size });
+            }
             error!("Invalid HELLO message");
             return Err(());
         };

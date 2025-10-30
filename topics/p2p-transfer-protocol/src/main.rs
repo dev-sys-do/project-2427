@@ -87,6 +87,7 @@ fn server_mode(bind_addr: &str, file_path: &str) -> io::Result<()> {
     );
 
     // Wait for client
+    // FIXME: We handle multiple clients, but since the output file is shared among them, this is unhelpful.
     for stream in listener.incoming() {
         match stream {
             Ok(mut s) => {
