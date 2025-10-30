@@ -40,8 +40,10 @@ enum Commands {
 }
 
 fn main() {
-    // Initialize logger
-    env_logger::init();
+    // Initialize logger to INFO level by default
+    env_logger::init_from_env(
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"),
+    );
 
     let cli = Cli::parse();
     // Note: if no command matches, clap automatically provides the help message & exits.
@@ -81,7 +83,7 @@ fn server_mode(bind_addr: &str, file_path: &str) -> io::Result<()> {
         .create(true)
         .open(file_path)?;
 
-    println!(
+    info!(
         "Server listening on {:?}. Saving to {}",
         listener, file_path
     );
