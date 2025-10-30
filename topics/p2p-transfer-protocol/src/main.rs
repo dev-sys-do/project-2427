@@ -1,8 +1,10 @@
 mod client;
 mod protocol;
-//mod server;
+
+use std::{fs::File, net::TcpStream, process::exit};
 
 use clap::{Parser, Subcommand};
+use log::{error, info};
 
 #[derive(Parser)]
 #[command(name = "p2p-transfer-protocol", about = "Simple P2P file transfer protocol")]
@@ -50,12 +52,28 @@ fn server_mode(bind_addr: &str, output_file: &str) {
     println!("Server listening on {}. Saving to {}", bind_addr, output_file);
 }
 
-fn client_mode(file: &str, remote_addr: &str) {
-    // Start client
-    // Connect to server: remote_addr
-    // Open input file: file
-    // Send input file
-    // Show result
-    println!("Client sending {} to {}", file, remote_addr);
-    // ...rest of client logic...
+fn client_mode(file_path: &str, remote_addr: &str) {
+    // Connect to server
+    let mut stream = match TcpStream::connect(remote_addr) {
+        Ok(mut s) => s,
+        Err(e) => {
+            error!("Failed to connect to {}: {}", remote_addr, e);
+            exit(1);
+        }
+    };
+    info!("Connected to {}", remote_addr);
+
+    // Open input file
+    let mut file = match File::open(file_path){
+        Ok(f) => f,
+        Err(e) => {
+            error!("Failed to open file {}: {}", file_path, e);
+            exit(1);
+        }
+    };
+
+    match client::run_client(file, stream) {
+        Ok(_) => info!("File sent successfully"),
+        Err(e) => error!("Failed to send file: {}", e),
+    }
 }

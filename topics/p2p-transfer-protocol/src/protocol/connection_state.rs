@@ -7,7 +7,6 @@ pub enum ConnectionState {
     Listening,
 
     HelloReceived,
-    SendReceived,
     ACKSent,
     NACKSent,
     ACKReceived,

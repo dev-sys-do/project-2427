@@ -1,7 +1,7 @@
 use log::{debug, warn};
 
 pub mod message;
-mod connection_state;
+pub mod connection_state;
 
 use connection_state::ConnectionState;
 

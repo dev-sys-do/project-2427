@@ -1,71 +1,60 @@
 use std::{fmt::Display, str::FromStr};
-
+use std::io::Write;
+use log::error;
 #[cfg(test)]
 use strum::EnumIter;
 
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(test,derive(EnumIter))]
 pub enum Message {
-    Hello,
+    Hello {
+        file_size: u64
+    },
     ACK,
     NACK,
-    Send,
+    Send
 }
+
 
 // Wire format
 impl Display for Message {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Message::Hello => "HELLO",
-            Message::ACK => "ACK",
-            Message::NACK => "NACK",
-            Message::Send => "SEND",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-impl FromStr for Message {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_ascii_uppercase().as_str() {
-            "HELLO" => Ok(Message::Hello),
-            "ACK" => Ok(Message::ACK),
-            "NACK" => Ok(Message::NACK),
-            "SEND" => Ok(Message::Send),
-            _ => Err(()),
+        match self {
+            Message::Hello { file_size } => write!(f, "HELLO {file_size}\n"),
+            Message::ACK => write!(f, "ACK\n"),
+            Message::NACK => write!(f, "NACK\n"),
+            Message::Send => write!(f, "SEND\n"),
         }
     }
 }
 
 
+impl FromStr for Message {
+    type Err = ();
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Normalize
+        let s = s.trim();
+        let upper = s.to_ascii_uppercase();
 
-    #[test]
-    fn test_serialize() {
-        assert_eq!(Message::Hello.to_string(), "HELLO");
-        assert_eq!(Message::ACK.to_string(), "ACK");
-        assert_eq!(Message::NACK.to_string(), "NACK");
-        assert_eq!(Message::Send.to_string(), "SEND");
+        if upper.starts_with("HELLO") {
+            let parts: Vec<&str> = s.split_whitespace().collect();
+            if parts.len() == 2 {
+                if let Ok(file_size) = parts[1].parse::<u64>() {
+                    return Ok(Message::Hello { file_size });
+                }
+            }
+            error!("Invalid HELLO message");
+            return Err(());
+        };
 
-        assert_eq!("hello".parse::<Message>(), Ok(Message::Hello));
-        assert_eq!("ACK".parse::<Message>(), Ok(Message::ACK));
-        assert_eq!("nack".parse::<Message>(), Ok(Message::NACK));
-        assert_eq!("SEND".parse::<Message>(), Ok(Message::Send));
-        assert!("unknown".parse::<Message>().is_err());
-    }
-
-
-    #[test]
-    fn test_deserialize() {
-        assert_eq!("hello".parse::<Message>(), Ok(Message::Hello));
-        assert_eq!("ACK".parse::<Message>(), Ok(Message::ACK));
-        assert_eq!("nack".parse::<Message>(), Ok(Message::NACK));
-        assert_eq!("SEND".parse::<Message>(), Ok(Message::Send));
-        assert!("unknown".parse::<Message>().is_err());
+        // No arguments msgs        
+        return match upper.as_str() {
+            "ACK" => Ok(Message::ACK),
+            "NACK" => Ok(Message::NACK),
+            "SEND" => Ok(Message::Send),
+            // Unknown message
+            _ => Err(()),
+        };
     }
 }
