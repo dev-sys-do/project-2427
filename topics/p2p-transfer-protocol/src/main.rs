@@ -3,14 +3,11 @@ mod protocol;
 mod server;
 
 use std::{
-    fs::{File, OpenOptions},
-    net::{TcpListener, TcpStream},
-    process::exit,
-    io,
+    fs::{File, OpenOptions}, io, net::{TcpListener, TcpStream}, process::exit
 };
 
 use clap::{Parser, Subcommand};
-use log::{error, info};
+use log::{debug, error, info};
 
 #[derive(Parser)]
 #[command(
@@ -27,15 +24,15 @@ enum Commands {
     Listen {
         #[arg(long, default_value = "[::]:0")] // Listen on any inet & let the kernel pick a port.
         bind: String,
-        #[arg(long, default_value = "out_file")]
-        output: String,
+        #[arg(long, default_value = "output_file")]
+        output_file: String,
     },
 
     Send {
-        #[arg(long, default_value = "out_file")]
+        #[arg(long)]
         file: String,
-        #[arg()]
-        remote_addr: String,
+        #[arg(long)]
+        server: String,
     },
 }
 
@@ -43,15 +40,18 @@ fn main() {
     // Initialize logger
     env_logger::init();
 
-    
     let cli = Cli::parse();
     // Note: if no command matches, clap automatically provides the help message & exits.
     match cli.command {
-        Commands::Listen { bind, output } => {
+        Commands::Listen { bind, output_file: output } => {
             let _ = server_mode(&bind, &output);
         }
-        Commands::Send { file, remote_addr } => {
-            client_mode(&file, &remote_addr);
+        Commands::Send { file, server: remote_addr } => {
+            
+            match client_mode(&file, &remote_addr) {
+                Ok(_) => info!("File sent successfully"),
+                Err(e) => error!("Failed to send file: {}", e),
+            }
         }
     }
 }
@@ -98,7 +98,12 @@ fn server_mode(bind_addr: &str, file_path: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn client_mode(file_path: &str, remote_addr: &str) {
+
+fn client_mode(file_path: &str, remote_addr: &str) -> io::Result<()> {
+    // Open input file
+    let file = File::open(file_path)?;
+    debug!("Opened file {}", file_path);
+
     // Connect to server
     let stream = match TcpStream::connect(remote_addr) {
         Ok(s) => s,
@@ -109,17 +114,6 @@ fn client_mode(file_path: &str, remote_addr: &str) {
     };
     info!("Connected to {}", remote_addr);
 
-    // Open input file
-    let file = match File::open(file_path) {
-        Ok(f) => f,
-        Err(e) => {
-            error!("Failed to open file {}: {}", file_path, e);
-            exit(1);
-        }
-    };
 
-    match client::run_client(file, stream) {
-        Ok(_) => info!("File sent successfully"),
-        Err(e) => error!("Failed to send file: {}", e),
-    }
+    client::run_client(file, stream)
 }

@@ -113,7 +113,6 @@ fn message_loop(state_machine: &mut StateMachine, stream: &mut TcpStream) -> Res
             None => {}, // No response is needed
         }
         // If we are in Established state, stop the line-based logic and receive the data.
-        warn!("Current state: {:?}", state_machine.current_state());
         if let ConnectionState::Established = state_machine.current_state() {
             break;
         }
