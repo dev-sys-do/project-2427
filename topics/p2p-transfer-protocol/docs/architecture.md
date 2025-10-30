@@ -1,5 +1,5 @@
 ## p2p-transfert-protocol
-A simple text-based protocol for file transfert.
+A simple text-based protocol for file transfer.
 This tool includes both a client and a single threaded server implementation.
 
 By default, the server listens on `[::]:0`. This can 
