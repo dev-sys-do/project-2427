@@ -65,7 +65,7 @@ fn main() {
 fn server_mode(bind_addr: &str, file_path: &str) -> io::Result<()> {
     // Start server
     // Bind to port: bind_addr
-    let listener = match TcpListener::bind(&bind_addr) {
+    let listener = match TcpListener::bind(bind_addr) {
         Ok(l) => l,
         Err(e) => {
             error!("Failed to bind to {}: {}", bind_addr, e);
@@ -76,6 +76,7 @@ fn server_mode(bind_addr: &str, file_path: &str) -> io::Result<()> {
 
     // Open or create output file:
     let mut file = OpenOptions::new()
+        .truncate(true)
         .write(true)
         .create(true)
         .open(file_path)?;

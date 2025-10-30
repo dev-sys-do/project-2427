@@ -18,11 +18,11 @@ fn on_hello(file_size: u64, state_machine: &mut StateMachine) -> Message {
     // send ack
     state_machine.transition(ConnectionState::ACKSent);
 
-    Message::ACK
+    Message::Ack
 }
 
 fn on_message(msg: Message, state_machine: &mut StateMachine) -> Option<Message> {
-    return match msg {
+    match msg {
         Message::Hello { file_size } => Some(on_hello(file_size, state_machine)),
         Message::Send => {
             info!("Client is starting to send data.");
@@ -34,7 +34,7 @@ fn on_message(msg: Message, state_machine: &mut StateMachine) -> Option<Message>
             warn!("Unexpected message from client: {:?}", msg);
             None
         }
-    };
+    }
 }
 
 fn send_message(stream: &mut TcpStream, msg: &Message) -> Result<(), io::Error> {
@@ -89,7 +89,7 @@ fn receive_file(
 
 fn message_loop(state_machine: &mut StateMachine, stream: &mut TcpStream) -> Result<(), io::Error> {
     let reader_stream = stream.try_clone().expect("Failed to clone stream");
-    let mut writer_stream = stream;
+    let writer_stream = stream;
     let reader = BufReader::new(reader_stream);
 
     for line in reader.lines() {
@@ -106,10 +106,8 @@ fn message_loop(state_machine: &mut StateMachine, stream: &mut TcpStream) -> Res
 
         // Process message
         // FIXME: Do not use unwrap, fix the result type mess.
-        match on_message(message.unwrap(), state_machine) {
-            Some(resp) => send_message(&mut writer_stream, &resp)?,
-            None => {} // No response is needed
-        }
+        if let Some(resp) = on_message(message.unwrap(), state_machine) { send_message(writer_stream, &resp)? }
+
         // If we are in Established state, stop the line-based logic and receive the data.
         if let ConnectionState::Established = state_machine.current_state() {
             break;

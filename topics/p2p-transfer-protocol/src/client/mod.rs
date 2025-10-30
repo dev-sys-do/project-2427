@@ -26,11 +26,11 @@ pub fn run_client(mut file: File, mut stream: TcpStream) -> io::Result<()> {
     reader.read_line(&mut response)?;
     let response = response.trim();
     match response.parse::<Message>() {
-        Ok(Message::ACK) => {
+        Ok(Message::Ack) => {
             debug!("Received ACK");
             sm.transition(ConnectionState::ACKReceived);
         }
-        Ok(Message::NACK) => {
+        Ok(Message::Nack) => {
             debug!("Received NACK");
             sm.transition(ConnectionState::NACKReceived);
             return Ok(());

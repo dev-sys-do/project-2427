@@ -4,8 +4,8 @@ use std::{fmt::Display, str::FromStr};
 #[derive(Debug, PartialEq, Eq)]
 pub enum Message {
     Hello { file_size: u64 },
-    ACK,
-    NACK,
+    Ack,
+    Nack,
     Send,
 }
 
@@ -13,10 +13,10 @@ pub enum Message {
 impl Display for Message {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Message::Hello { file_size } => write!(f, "HELLO {file_size}\n"),
-            Message::ACK => write!(f, "ACK\n"),
-            Message::NACK => write!(f, "NACK\n"),
-            Message::Send => write!(f, "SEND\n"),
+            Message::Hello { file_size } => writeln!(f, "HELLO {file_size}"),
+            Message::Ack => writeln!(f, "ACK"),
+            Message::Nack => writeln!(f, "NACK"),
+            Message::Send => writeln!(f, "SEND"),
         }
     }
 }
@@ -31,22 +31,21 @@ impl FromStr for Message {
 
         if upper.starts_with("HELLO") {
             let parts: Vec<&str> = s.split_whitespace().collect();
-            if parts.len() == 2 {
-                if let Ok(file_size) = parts[1].parse::<u64>() {
+            if parts.len() == 2
+                && let Ok(file_size) = parts[1].parse::<u64>() {
                     return Ok(Message::Hello { file_size });
                 }
-            }
             error!("Invalid HELLO message");
             return Err(());
         };
 
         // No arguments msgs
-        return match upper.as_str() {
-            "ACK" => Ok(Message::ACK),
-            "NACK" => Ok(Message::NACK),
+        match upper.as_str() {
+            "ACK" => Ok(Message::Ack),
+            "NACK" => Ok(Message::Nack),
             "SEND" => Ok(Message::Send),
             // Unknown message
             _ => Err(()),
-        };
+        }
     }
 }
