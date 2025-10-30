@@ -121,3 +121,5 @@ fn handle_connection(mut stream: TcpStream, output_dir: PathBuf) -> io::Result<(
     );
     Ok(())
 }
+
+// I don't know what I can test...

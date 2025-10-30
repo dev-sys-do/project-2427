@@ -84,3 +84,52 @@ impl Command {
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_parse_all_commands() {
+        assert_eq!(Command::parse("ACK").unwrap(), Command::Ack);
+        assert_eq!(Command::parse("NACK").unwrap(), Command::Nack);
+        assert_eq!(
+            Command::parse("HELLO test.txt 1024").unwrap(),
+            Command::Hello {
+                filename: "test.txt".to_string(),
+                size: 1024
+            }
+        );
+        assert_eq!(
+            Command::parse("SEND 2048").unwrap(),
+            Command::Send { size: 2048 }
+        );
+    }
+
+    #[test]
+    fn test_parse_errors() {
+        assert!(Command::parse("").is_err());
+        assert!(Command::parse("INVALID").is_err());
+        assert!(Command::parse("HELLO file.txt").is_err());
+        assert!(Command::parse("HELLO file.txt abc").is_err());
+        assert!(Command::parse("SEND").is_err());
+        assert!(Command::parse("SEND xyz").is_err());
+    }
+
+    #[test]
+    fn test_read_write() {
+        let cmd = Command::Hello {
+            filename: "test.bin".to_string(),
+            size: 512,
+        };
+
+        let mut buffer = Vec::new();
+        cmd.write_to(&mut buffer).unwrap();
+
+        let mut cursor = Cursor::new(buffer);
+        let read_cmd = Command::read_from(&mut cursor).unwrap();
+
+        assert_eq!(cmd, read_cmd);
+    }
+}
