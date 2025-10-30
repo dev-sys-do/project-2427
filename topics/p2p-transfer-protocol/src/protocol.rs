@@ -13,16 +13,16 @@ impl Command {
     pub fn to_bytes(&self) -> Vec<u8> {
         match self {
             Command::Hello { filename, size } => {
-                format!("HELLO {} {}\n", filename, size).into_bytes()
+                format!("HELLO {filename} {size}\n").into_bytes()
             }
             Command::Ack => {
-              format!("ACK\n").into_bytes()
+              "ACK\n".to_string().into_bytes()
             }
             Command::Nack => {
-              format!("NACK\n").into_bytes()
+              "NACK\n".to_string().into_bytes()
             }
             Command::Send { size } => {
-                format!("SEND {}\n", size).into_bytes()
+                format!("SEND {size}\n").into_bytes()
             }
         }
     }

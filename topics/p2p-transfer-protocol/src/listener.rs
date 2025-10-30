@@ -10,9 +10,9 @@ pub fn listen(port: u16, output_dir: PathBuf) -> io::Result<()> {
     if !output_dir.exists() {
         fs::create_dir_all(&output_dir)?;
     }
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = format!("0.0.0.0:{port}");
     let listener = TcpListener::bind(&addr)?;
-    println!("Listening on port {} for incoming transfers", port);
+    println!("Listening on port {port} for incoming transfers");
     println!("Files will be saved to: {}", output_dir.display());
     for stream in listener.incoming() {
         match stream {
@@ -21,12 +21,12 @@ pub fn listen(port: u16, output_dir: PathBuf) -> io::Result<()> {
                 // spawn a new thread for each connection
                 thread::spawn(move || {
                     if let Err(e) = handle_connection(stream, output_dir) {
-                        println!("Error handling connection: {}", e);
+                        println!("Error handling connection: {e}");
                     }
                 });
             }
             Err(e) => {
-                println!("Error accepting connection: {}", e);
+                println!("Error accepting connection: {e}");
             }
         }
     }
@@ -35,19 +35,18 @@ pub fn listen(port: u16, output_dir: PathBuf) -> io::Result<()> {
 
 fn handle_connection(mut stream: TcpStream, output_dir: PathBuf) -> io::Result<()> {
     let peer_addr = stream.peer_addr()?;
-    println!("\nNew connection from {} established", peer_addr);
+    println!("\nNew connection from {peer_addr} established");
     // read HELLO command
     let hello = Command::read_from(&mut stream)?;
     let (filename, expected_size) = match hello {
         Command::Hello { filename, size } => {
             println!(
-                "Received HELLO: file='{}', size={} bytes",
-                filename, size
+                "Received HELLO: file='{filename}', size={size} bytes"
             );
             (filename, size)
         }
         _ => {
-            println!("Expected HELLO from {}, got {:?}", peer_addr, hello);
+            println!("Expected HELLO from {peer_addr}, got {hello:?}");
             Command::Nack.write_to(&mut stream)?;
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
@@ -70,7 +69,7 @@ fn handle_connection(mut stream: TcpStream, output_dir: PathBuf) -> io::Result<(
         return Ok(());
     }
     // send ACK
-    println!("Accepting file transfer from {}", peer_addr);
+    println!("Accepting file transfer from {peer_addr}");
     Command::Ack.write_to(&mut stream)?;
     // dead SEND command
     let send = Command::read_from(&mut stream)?;
@@ -79,7 +78,7 @@ fn handle_connection(mut stream: TcpStream, output_dir: PathBuf) -> io::Result<(
             size
         }
         _ => {
-            println!("Expected SEND from {}, got {:?}", peer_addr, send);
+            println!("Expected SEND from {peer_addr}, got {send:?}");
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 "Expected SEND command",
@@ -89,8 +88,7 @@ fn handle_connection(mut stream: TcpStream, output_dir: PathBuf) -> io::Result<(
     // verify size matches HELLO
     if send_size != expected_size {
         println!(
-            "Size mismatch for file from {} : HELLO={}, SEND={}",
-            peer_addr, expected_size, send_size
+            "Size mismatch for file from {peer_addr} : HELLO={expected_size}, SEND={send_size}"
         );
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
@@ -98,7 +96,7 @@ fn handle_connection(mut stream: TcpStream, output_dir: PathBuf) -> io::Result<(
         ));
     }
     // receive file
-    println!("Receiving file from {}...", peer_addr);
+    println!("Receiving file from {peer_addr}...");
     let mut file = File::create(&output_path)?;
     let mut remaining_bytes = send_size;
     let mut buffer = [0u8; 8192];

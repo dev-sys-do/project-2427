@@ -45,7 +45,7 @@ fn main() {
         }
     };
     if let Err(e) = result {
-        println!("oops, {}", e);
+        println!("oops, {e}");
         process::exit(1);
     }
 }

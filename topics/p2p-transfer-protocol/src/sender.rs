@@ -14,8 +14,8 @@ pub fn send(file_path: &Path, to_addr: &str, port: u16) -> io::Result<()> {
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid file path"))?
         .to_string_lossy()
         .to_string();
-    println!("Connecting to {}:{}...", to_addr, port);
-    let addr = format!("{}:{}", to_addr, port);
+    println!("Connecting to {to_addr}:{port}...");
+    let addr = format!("{to_addr}:{port}");
     let mut stream = TcpStream::connect(&addr)?;
     println!("Connected!");
     // send HELLO
@@ -38,7 +38,7 @@ pub fn send(file_path: &Path, to_addr: &str, port: u16) -> io::Result<()> {
         _ => {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Expected ACK or NACK, got {:?}", response),
+                format!("Expected ACK or NACK, got {response:?}"),
             ));
         }
     }
