@@ -1,29 +1,58 @@
-# A P2P Transfer Protocol
+# Ferrisshare — P2P file transfer
 
-## Description and Goal
+Ferrisshare is a small Rust peer-to-peer file transfer toy used for a systems programming project.
+It implements a tiny text-based protocol over TCP to send a single file from a sender (CLI) to a receiver (listener).
+For a detailed protocol and architecture overview, see [docs/architecture.md](docs/architecture.md).
 
-Build a CLI tool that allows two users on the same network to transfer a single file to each other.
-The tool should be able to act as both the sender and the receiver, without a central server.
+## What it is
 
-It is expected for a sender to know the IP of the receiver, i.e. there is no discovery protocol.
+- A minimal CLI sender (`cli` binary) and a listener/receiver service (`ferrisshare` binary).
+- Protocol highlights: `HELLO` to announce a file, `YEET` to send block headers followed by the raw block bytes, `MISSION-ACCOMPLISHED` then `BYE-RIS` to finish.
+- Storage: receiver writes to a temporary `*.ferrisshare` file then renames to the final filename.
 
-```shell
-# Receiving a file on port 9000
-p2p-tool listen --port 9000 --output ./shared
+## Quick run (local development)
 
-# Sending a file
-p2p-tool send --file report.pdf --to 192.168.1.100 --port 9000
+Prerequisites:
+
+- rust toolchain (stable) and cargo
+- network access to localhost
+
+Build the workspace:
+
+```bash
+cargo build --workspace
 ```
 
-## Hints and Suggestions
+Run the listener (receiver) on port 9000 (default):
 
-- Define and document a simple networking protocol with a few commands. For example
-  - HELLO: For the sender to offer a file to the receiver. It takes a file size argument.
-  - ACK: For the receiver to tell the sender it is ready to receive a proposed file.
-  - NACK: For the receiver to reject a proposed file.
-  - SEND: Send, for the sender to actually send a file. It also takes a file size argument, that must match the `HELLO` offer.
-- Start a receiving thread for every sender connection.
+```bash
+# In one terminal
+cargo run --bin ferrisshare
+```
 
-## Grade Factor
+Send a file with the CLI (sender). Example: send the repository `README.md` to localhost:9000
 
-The grade factor for this project is *1*.
+```bash
+# In another terminal
+cargo run --bin cli -- send --addr 127.0.0.1:9000 --file README.md --block-size 2048
+```
+
+**Recommended minimal block size**
+
+We recommend using a minimal block size of 2048 bytes (as shown in the example above). Larger blocks reduce protocol overhead and typically improve throughput for local transfers. Be aware larger blocks use more memory and may be less forgiving on very unreliable networks — adjust down if you see timeouts or memory pressure.
+
+Logs printed to both terminals show the protocol exchange (HELLO, OK, YEET blocks, OK-HOUSTEN responses, MISSION-ACCOMPLISHED, SUCCESS, BYE-RIS).
+
+## Notes and troubleshooting
+
+- The listener stores incoming data in `./<filename>.ferrisshare` during transfer and renames it to `./<filename>` after `MISSION-ACCOMPLISHED`.
+- If you change block sizes on the sender, ensure they match the expected file split behavior.
+- For debugging, run both binaries locally and watch logs.
+
+## Development
+
+- Tests: `cargo test`
+- Formatting: `cargo fmt`
+- Linting: `cargo clippy --all-targets --all-features -- -D warnings`
+
+If you want more detailed usage or a packaged distribution, tell me which format you prefer and I'll add it.

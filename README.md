@@ -1,73 +1,58 @@
-# Polytech DevOps - System Programming Project
+# Ferrisshare — P2P file transfer
 
-## Rules
+Ferrisshare is a small Rust peer-to-peer file transfer toy used for a systems programming project.
+It implements a tiny text-based protocol over TCP to send a single file from a sender (CLI) to a receiver (listener).
+For a detailed protocol and architecture overview, see [docs/architecture.md](docs/architecture.md).
 
-Students MUST pick one out of the [four proposed topics](topics).
+## What it is
 
-Before the project deadline, students MUST turn in an [architecture document](#architecture-and-documentation) and an [implementation](#implementation) for the selected topic, in the form of a [GitHub pull request](#project-contribution).
+- A minimal CLI sender (`cli` binary) and a listener/receiver service (`ferrisshare` binary).
+- Protocol highlights: `HELLO` to announce a file, `YEET` to send block headers followed by the raw block bytes, `MISSION-ACCOMPLISHED` then `BYE-RIS` to finish.
+- Storage: receiver writes to a temporary `*.ferrisshare` file then renames to the final filename.
 
-## Topics
+## Quick run (local development)
 
-Four different topics are proposed:
+Prerequisites:
 
-1. [A networking port scanner](topics/port-scanner).
-1. [A peer-to-peer file transfer protocol](topics/p2p-transfer-protocol).
-1. [A web scraper](topics/web-scraper).
-1. [A tic-tac-toe AI agent](topics/tic-tac-toe).
+- rust toolchain (stable) and cargo
+- network access to localhost
 
-## Grade
+Build the workspace:
 
-Your work will be evaluated based on the following criteria:
+```bash
+cargo build --workspace
+```
 
-### Architecture and Documentation
+Run the listener (receiver) on port 9000 (default):
 
-**This accounts for 40% of the final grade**
+```bash
+# In one terminal
+cargo run --bin ferrisshare
+```
 
-You MUST provide a short, `markdown` formatted and English written document describing your project architecture.
+Send a file with the CLI (sender). Example: send the repository `README.md` to localhost:9000
 
-It MUST live under a projects top level folder called `docs/`, e.g. `docs/architecture.md`.
+```bash
+# In another terminal
+cargo run --bin cli -- send --addr 127.0.0.1:9000 --file README.md --block-size 2048
+```
 
-It SHOULD at least contain the following sections:
+**Recommended minimal block size**
 
-1. Project definition: What is it? What are the goals of the tool/project?
-1. Components and modules: Describe which modules compose your project, and how they interact together. Briefly justify why you architectured it this way.
-1. Usage: How can one use it? Give usage examples.
+We recommend using a minimal block size of 2048 bytes (as shown in the example above). Larger blocks reduce protocol overhead and typically improve throughput for local transfers. Be aware larger blocks use more memory and may be less forgiving on very unreliable networks — adjust down if you see timeouts or memory pressure.
 
-### Implementation
+Logs printed to both terminals show the protocol exchange (HELLO, OK, YEET blocks, OK-HOUSTEN responses, MISSION-ACCOMPLISHED, SUCCESS, BYE-RIS).
 
-**This accounts for 40% of the final grade**
+## Notes and troubleshooting
 
-The project MUST be implemented in Rust.
+- The listener stores incoming data in `./<filename>.ferrisshare` during transfer and renames it to `./<filename>` after `MISSION-ACCOMPLISHED`.
+- If you change block sizes on the sender, ensure they match the expected file split behavior.
+- For debugging, run both binaries locally and watch logs.
 
-The implementation MUST be formatted, build without warnings (including `clippy` warnings) and commented.
+## Development
 
-The implementation modules and crates MAY be unit tested.
+- Tests: `cargo test`
+- Formatting: `cargo fmt`
+- Linting: `cargo clippy --all-targets --all-features -- -D warnings`
 
-### Project Contribution
-
-**This accounts for 20% of the final grade**
-
-The project MUST be submitted as one single GitHub pull request (PR) against the [current](https://github.com/dev-sys-do/project-2427) repository, for the selected project.
-
-For example, a student picking the `p2p-transfer-protocol` topic MUST send a PR that adds all deliverables (source code, documentation) to the `topics/p2p-transfer-protocol/` folder.
-
-All submitted PRs will not be evaluated until the project deadline. They can thus be incomplete, rebased, closed, and modified until the project deadline.
-
-A pull request quality is evaluated on the following criteria:
-* Commit messages: Each git commit message should provide a clear description and explanation of what the corresponding change brings and does.
-* History: The pull request git history MUST be linear (no merge points) and SHOULD represent the narrative of the underlying work. It is a representation of the author's logical work in putting the implementation together.
-
-A very good reference on the topic: https://github.blog/developer-skills/github/write-better-commits-build-better-projects/
-
-### Grade Factor
-
-All proposed topics have a grade factor, describing their relative complexity.
-
-The final grade is normalized against the selected topic's grade factor: `final_grade = grade * topic_grade_factor`.
-
-For example, a grade of `8/10` for a topic which grade factor is `1.1` will generate a final grade of `8.8/10`.
-
-
-## Deadline
-
-All submitted PRs will be evaluated on October 30th, 2025 at 11:00 PM UTC.
+If you want more detailed usage or a packaged distribution, tell me which format you prefer and I'll add it.
