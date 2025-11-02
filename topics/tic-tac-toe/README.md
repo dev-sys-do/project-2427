@@ -22,4 +22,4 @@ A simpler, alternative option is the tree search one: The algorithm builds a gam
 
 ## Grade Factor
 
-The grade factor for this project is *1.2*.
+The grade factor for this project is _1.2_.

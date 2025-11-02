@@ -1,0 +1,13 @@
+[package]
+name = "tic-tac-toe"
+version = "0.1.0"
+edition = "2021"
+authors = ["Student"]
+description = "An intelligent Tic-Tac-Toe AI agent using Minimax algorithm"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+
+[dev-dependencies]
+rstest = "0.18"
