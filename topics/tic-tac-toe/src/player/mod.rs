@@ -7,5 +7,5 @@ pub mod terminal;
 pub trait PlayerBehavior {
     fn game_start(&mut self, me: PlayerID);
     fn play(&mut self, grid: Grid) -> crate::Result<Position>;
-    fn game_ended(&mut self, grid: Grid, winner: bool);
+    fn game_ended(&mut self, grid: Grid, winner: Option<PlayerID>);
 }

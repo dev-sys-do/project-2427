@@ -19,10 +19,21 @@ impl<T1: PlayerBehavior, T2: PlayerBehavior> Game<T1, T2> {
         }
     }
 
+    /// Call handlers, and run tic-tac-toe logic
     pub fn play(mut self) -> crate::Result<Option<PlayerID>> {
         self.player1.game_start(crate::types::PlayerID::Player1);
         self.player2.game_start(crate::types::PlayerID::Player2);
 
+        let winner = self.play_inner()?;
+
+        self.player1.game_ended(self.grid, winner);
+        self.player2.game_ended(self.grid, winner);
+
+        Ok(winner)
+    }
+
+    /// Actual play logic, without calling handlers
+    pub fn play_inner(&mut self) -> crate::Result<Option<PlayerID>> {
         let mut current_player: &mut dyn PlayerBehavior = &mut self.player1;
         let mut current_player_id = crate::types::PlayerID::Player1;
 

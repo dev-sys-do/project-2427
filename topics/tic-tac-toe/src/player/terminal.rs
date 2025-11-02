@@ -109,12 +109,12 @@ impl PlayerBehavior for TerminalPlayer {
         }
     }
 
-    fn game_ended(&mut self, grid: Grid, winner: bool) {
+    fn game_ended(&mut self, grid: Grid, winner: Option<PlayerID>) {
         self.print_grid(grid);
-        if winner {
-            println!("You won!");
-        } else {
-            println!("You lost!");
+        match winner {
+            None => println!("It's a tie!"),
+            Some(winner_id) if Some(winner_id) == self.me => println!("You won!"),
+            Some(_) => println!("You lost!"),
         }
     }
 }

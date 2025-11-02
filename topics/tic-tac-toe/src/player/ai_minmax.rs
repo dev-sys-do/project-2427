@@ -113,7 +113,7 @@ impl PlayerBehavior for AIMinMax {
         }
     }
 
-    fn game_ended(&mut self, _grid: Grid, _winner: bool) {
+    fn game_ended(&mut self, _grid: Grid, _winner: Option<PlayerID>) {
         // AI doesn't need to do anything when game ends
     }
 }
