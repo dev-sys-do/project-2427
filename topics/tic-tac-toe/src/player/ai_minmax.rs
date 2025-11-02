@@ -11,28 +11,31 @@ pub struct AIMinMax {
 
 impl AIMinMax {
     pub fn new() -> Self {
-        AIMinMax {
-            ai_player: None
+        AIMinMax { ai_player: None }
+    }
+
+    fn ai_player(&self) -> PlayerID {
+        self.ai_player
+            .expect("self.ai_player should be set by game_start()")
+    }
+
+    fn opponent(&self) -> PlayerID {
+        match self.ai_player() {
+            PlayerID::Player1 => PlayerID::Player2,
+            PlayerID::Player2 => PlayerID::Player1,
         }
     }
 
     /// Minimax algorithm implementation
-    fn minimax(
-        &self,
-        mut grid: Grid,
-        depth: i32,
-        is_maximizing: bool,
-        ai_player: PlayerID,
-        opponent: PlayerID,
-    ) -> i32 {
+    fn minimax(&self, mut grid: Grid, depth: i32, is_maximizing: bool) -> i32 {
         // Check if there is a winner yet
         match grid::is_there_a_win(grid) {
             // If AI has won, return score minus depth to prefer quicker wins
-            Some(winner) if winner == ai_player => {
+            Some(winner) if winner == self.ai_player() => {
                 return 10 - depth;
             }
             // If opponent has won, return score plus depth to delay losses
-            Some(winner) if winner == opponent => {
+            Some(_) => {
                 return -10 + depth;
             }
             _ => {}
@@ -48,8 +51,8 @@ impl AIMinMax {
 
             for i in 0..9 {
                 if grid[i].is_none() {
-                    grid[i] = Some(ai_player);
-                    let value = self.minimax(grid, depth + 1, false, ai_player, opponent);
+                    grid[i] = self.ai_player;
+                    let value = self.minimax(grid, depth + 1, false);
                     grid[i] = None;
                     best = best.max(value);
                 }
@@ -60,8 +63,8 @@ impl AIMinMax {
 
             for i in 0..9 {
                 if grid[i].is_none() {
-                    grid[i] = Some(opponent);
-                    let value = self.minimax(grid, depth + 1, true, ai_player, opponent);
+                    grid[i] = Some(self.opponent());
+                    let value = self.minimax(grid, depth + 1, true);
                     grid[i] = None;
                     best = best.min(value);
                 }
@@ -71,20 +74,15 @@ impl AIMinMax {
     }
 
     /// Find the best move using minimax algorithm
-    fn find_best_move(&self, mut grid: Grid, ai_player: PlayerID) -> Option<Position> {
+    fn find_best_move(&self, mut grid: Grid) -> Option<Position> {
         let mut best_val = i32::MIN;
         let mut best_move = None;
 
-        let opponent = match ai_player {
-            PlayerID::Player1 => PlayerID::Player2,
-            PlayerID::Player2 => PlayerID::Player1,
-        };
-
         for i in 0..9 {
             if grid[i].is_none() {
-                grid[i] = Some(ai_player); // Simulate AI move
+                grid[i] = self.ai_player; // Simulate AI move
                 // After AI move, it's opponent's turn (so start with minimizing)
-                let move_val = self.minimax(grid, 0, false, ai_player, opponent);
+                let move_val = self.minimax(grid, 0, false);
                 grid[i] = None; // Reset move
 
                 if move_val > best_val {
@@ -104,7 +102,7 @@ impl PlayerBehavior for AIMinMax {
     }
 
     fn play(&mut self, grid: Grid) -> crate::Result<Position> {
-        if let Some(best_move) = self.find_best_move(grid, self.ai_player.expect("self.ai_player should be set by game_start()")) {
+        if let Some(best_move) = self.find_best_move(grid) {
             Ok(best_move)
         } else {
             Err(crate::types::Error::Other(
