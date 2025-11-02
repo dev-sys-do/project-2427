@@ -27,6 +27,31 @@ impl TerminalPlayer {
             _ => Err(Error::InvalidInput),
         }
     }
+
+    fn reset_screen(&self) {
+        // Clear the terminal screen
+        print!("\x1B[2J\x1B[H");
+        stdout().flush().unwrap();
+    }
+
+    fn print_grid(&self, grid: Grid) {
+        self.reset_screen();
+
+        println!("You are playing Tic-Tac-Toe!");
+        println!("X = You  |  O = Other player  |  numbers = Available Positions");
+        println!();
+
+        for i in 0..9 {
+            match grid[i] {
+                Some(PlayerID::Player1) => print!(" X "),
+                Some(PlayerID::Player2) => print!(" O "),
+                None => print!(" {} ", i),
+            }
+            if i % 3 == 2 {
+                println!();
+            }
+        }
+    }
 }
 
 impl PlayerBehavior for TerminalPlayer {
@@ -35,6 +60,7 @@ impl PlayerBehavior for TerminalPlayer {
     }
 
     fn play(&self, grid: Grid) -> crate::Result<Position> {
+        self.print_grid(grid);
         loop {
             match self.read_position() {
                 Ok(pos) => {
@@ -53,6 +79,7 @@ impl PlayerBehavior for TerminalPlayer {
     }
 
     fn game_ended(&self, grid: Grid, winner: bool) {
+        self.print_grid(grid);
         if winner {
             println!("You won!");
         } else {
