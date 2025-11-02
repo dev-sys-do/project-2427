@@ -1,8 +1,6 @@
-use crate::{
-    logic::grid,
-    player::PlayerBehavior,
-    types::{Grid, PlayerID, Position},
-};
+use crate::types::{Grid, PlayerID};
+
+use crate::{logic::grid, player::PlayerBehavior, types::Position};
 
 /// A player simulated using the Min-Max algorithm
 pub struct AIMinMax {
@@ -119,5 +117,78 @@ impl PlayerBehavior for AIMinMax {
 
     fn game_ended(&mut self, _grid: Grid, _winner: Option<PlayerID>) {
         // AI doesn't need to do anything when game ends
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn empty_grid() -> Grid {
+        [None; 9]
+    }
+
+    #[test]
+    fn test_ai_chooses_winning_move() {
+        let mut ai = AIMinMax::new();
+        ai.game_start(PlayerID::Player1);
+        let mut grid = empty_grid();
+        grid[0] = Some(PlayerID::Player1);
+        grid[1] = Some(PlayerID::Player1);
+        grid[4] = Some(PlayerID::Player2);
+        let mv = ai.play(grid).unwrap();
+        assert_eq!(mv, 2);
+    }
+
+    #[test]
+    fn test_ai_blocks_opponent_win() {
+        // AI is Player2, must block Player1 at position 2
+        let mut ai = AIMinMax::new();
+        ai.game_start(PlayerID::Player2);
+        let mut grid = empty_grid();
+        grid[0] = Some(PlayerID::Player1);
+        grid[1] = Some(PlayerID::Player1);
+        grid[4] = Some(PlayerID::Player2);
+        let mv = ai.play(grid).unwrap();
+        assert_eq!(mv, 2);
+    }
+
+    #[test]
+    fn test_ai_handles_full_board() {
+        // Board is full, no moves left
+        let mut ai = AIMinMax::new();
+        ai.game_start(PlayerID::Player1);
+        let grid = [
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player2),
+        ];
+        let res = ai.play(grid);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_ai_chooses_draw_if_no_win_possible() {
+        // AI is Player1, only move left leads to draw
+        let mut ai = AIMinMax::new();
+        ai.game_start(PlayerID::Player1);
+        let grid = [
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player1),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player2),
+            Some(PlayerID::Player1),
+            None,
+        ];
+        let mv = ai.play(grid).unwrap();
+        assert_eq!(mv, 8);
     }
 }
