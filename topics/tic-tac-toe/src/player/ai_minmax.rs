@@ -1,5 +1,5 @@
 use crate::{
-    logic,
+    logic::grid,
     player::PlayerBehavior,
     types::{Grid, PlayerID, Position},
 };
@@ -20,7 +20,7 @@ impl AIMinMax {
         opponent: PlayerID,
     ) -> i32 {
         // Check if there is a winner yet
-        match crate::logic::is_there_a_win(grid) {
+        match grid::is_there_a_win(grid) {
             // If AI has won, return score minus depth to prefer quicker wins
             Some(winner) if winner == ai_player => {
                 return 10 - depth;
@@ -33,7 +33,7 @@ impl AIMinMax {
         };
 
         // If no moves left, it's a tie
-        if !logic::are_there_moves_left(grid) {
+        if !grid::are_there_moves_left(grid) {
             return 0;
         }
 
