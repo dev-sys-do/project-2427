@@ -16,6 +16,12 @@ pub struct TerminalPlayer {
     me: Option<PlayerID>,
 }
 
+impl Default for TerminalPlayer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TerminalPlayer {
     pub fn new() -> Self {
         TerminalPlayer {
@@ -34,7 +40,7 @@ impl TerminalPlayer {
             .map_err(|e| Error::Other(e.to_string()))?;
 
         match input.trim().parse::<u8>() {
-            Ok(num) if num < 9 => return Ok(num),
+            Ok(num) if num < 9 => Ok(num),
             _ => Err(Error::InvalidInput),
         }
     }

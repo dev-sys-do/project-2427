@@ -9,6 +9,12 @@ pub struct AIMinMax {
     ai_player: Option<PlayerID>, // (me)
 }
 
+impl Default for AIMinMax {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AIMinMax {
     pub fn new() -> Self {
         AIMinMax { ai_player: None }
