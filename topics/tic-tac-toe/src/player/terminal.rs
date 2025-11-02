@@ -24,7 +24,7 @@ fn read_position() -> crate::Result<Position> {
 }
 
 impl PlayerBehavior for TerminalPlayer {
-    fn game_start(&self) {
+    fn game_start(&mut self, _me: PlayerID) {
         println!("Game starts");
     }
 

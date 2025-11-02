@@ -1,3 +1,4 @@
+pub mod logic;
 pub mod player;
 pub mod types;
 

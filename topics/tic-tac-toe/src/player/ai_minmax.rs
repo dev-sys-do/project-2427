@@ -1,19 +1,113 @@
 use crate::{
+    logic,
     player::PlayerBehavior,
-    types::{Grid, Position},
+    types::{Grid, PlayerID, Position},
 };
 
 /// A player simulated using the Min-Max algorithm
-pub struct AIMinMax;
+pub struct AIMinMax {
+    ai_player: PlayerID, // (me)
+}
 
-impl PlayerBehavior for AIMinMax {
-    fn game_start(&self) {}
+impl AIMinMax {
+    /// Minimax algorithm implementation
+    fn minimax(
+        &self,
+        mut grid: Grid,
+        depth: i32,
+        is_maximizing: bool,
+        ai_player: PlayerID,
+        opponent: PlayerID,
+    ) -> i32 {
+        // Check if there is a winner yet
+        match crate::logic::is_there_a_win(grid) {
+            // If AI has won, return score minus depth to prefer quicker wins
+            Some(winner) if winner == ai_player => {
+                return 10 - depth;
+            }
+            // If opponent has won, return score plus depth to delay losses
+            Some(winner) if winner == opponent => {
+                return -10 + depth;
+            }
+            _ => {}
+        };
 
-    fn play(&self, grid: Grid) -> crate::Result<Position> {
-        todo!();
+        // If no moves left, it's a tie
+        if !logic::are_there_moves_left(grid) {
+            return 0;
+        }
+
+        if is_maximizing {
+            let mut best = i32::MIN;
+
+            for i in 0..9 {
+                if grid[i].is_none() {
+                    grid[i] = Some(ai_player);
+                    let value = self.minimax(grid, depth + 1, false, ai_player, opponent);
+                    grid[i] = None;
+                    best = best.max(value);
+                }
+            }
+            best
+        } else {
+            let mut best = i32::MAX;
+
+            for i in 0..9 {
+                if grid[i].is_none() {
+                    grid[i] = Some(opponent);
+                    let value = self.minimax(grid, depth + 1, true, ai_player, opponent);
+                    grid[i] = None;
+                    best = best.min(value);
+                }
+            }
+            best
+        }
     }
 
-    fn game_ended(&self, grid: Grid, winner: bool) {
-        todo!()
+    /// Find the best move using minimax algorithm
+    fn find_best_move(&self, mut grid: Grid, ai_player: PlayerID) -> Option<Position> {
+        let mut best_val = i32::MIN;
+        let mut best_move = None;
+
+        let opponent = match ai_player {
+            PlayerID::Player1 => PlayerID::Player2,
+            PlayerID::Player2 => PlayerID::Player1,
+        };
+
+        for i in 0..9 {
+            if grid[i].is_none() {
+                grid[i] = Some(ai_player); // Simulate AI move
+                // After AI move, it's opponent's turn (so start with minimizing)
+                let move_val = self.minimax(grid, 0, false, ai_player, opponent);
+                grid[i] = None; // Reset move
+
+                if move_val > best_val {
+                    best_move = Some(i as Position);
+                    best_val = move_val;
+                }
+            }
+        }
+
+        best_move
+    }
+}
+
+impl PlayerBehavior for AIMinMax {
+    fn game_start(&mut self, me: PlayerID) {
+        self.ai_player = me;
+    }
+
+    fn play(&self, grid: Grid) -> crate::Result<Position> {
+        if let Some(best_move) = self.find_best_move(grid, self.ai_player) {
+            Ok(best_move)
+        } else {
+            Err(crate::types::Error::Other(
+                "No valid moves available".to_string(),
+            ))
+        }
+    }
+
+    fn game_ended(&self, _grid: Grid, _winner: bool) {
+        // AI doesn't need to do anything when game ends
     }
 }
