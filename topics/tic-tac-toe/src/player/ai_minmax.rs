@@ -6,10 +6,16 @@ use crate::{
 
 /// A player simulated using the Min-Max algorithm
 pub struct AIMinMax {
-    ai_player: PlayerID, // (me)
+    ai_player: Option<PlayerID>, // (me)
 }
 
 impl AIMinMax {
+    pub fn new() -> Self {
+        AIMinMax {
+            ai_player: None
+        }
+    }
+
     /// Minimax algorithm implementation
     fn minimax(
         &self,
@@ -94,11 +100,11 @@ impl AIMinMax {
 
 impl PlayerBehavior for AIMinMax {
     fn game_start(&mut self, me: PlayerID) {
-        self.ai_player = me;
+        self.ai_player = Some(me);
     }
 
     fn play(&self, grid: Grid) -> crate::Result<Position> {
-        if let Some(best_move) = self.find_best_move(grid, self.ai_player) {
+        if let Some(best_move) = self.find_best_move(grid, self.ai_player.expect("self.ai_player should be set by game_start()")) {
             Ok(best_move)
         } else {
             Err(crate::types::Error::Other(

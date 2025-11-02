@@ -8,18 +8,24 @@ use crate::{
 /// A player that interacts via a terminal (stdout and stdin)
 pub struct TerminalPlayer;
 
-fn read_position() -> crate::Result<Position> {
-    print!("Enter your move (0-8): ");
-    stdout().flush().map_err(|e| Error::Other(e.to_string()))?;
+impl TerminalPlayer {
+    pub fn new() -> Self {
+        TerminalPlayer
+    }
 
-    let mut input = String::new();
-    stdin()
-        .read_line(&mut input)
-        .map_err(|e| Error::Other(e.to_string()))?;
+    fn read_position(&self) -> crate::Result<Position> {
+        print!("Enter your move (0-8): ");
+        stdout().flush().map_err(|e| Error::Other(e.to_string()))?;
 
-    match input.trim().parse::<u8>() {
-        Ok(num) if num < 9 => return Ok(num),
-        _ => Err(Error::InvalidInput),
+        let mut input = String::new();
+        stdin()
+            .read_line(&mut input)
+            .map_err(|e| Error::Other(e.to_string()))?;
+
+        match input.trim().parse::<u8>() {
+            Ok(num) if num < 9 => return Ok(num),
+            _ => Err(Error::InvalidInput),
+        }
     }
 }
 
@@ -30,7 +36,7 @@ impl PlayerBehavior for TerminalPlayer {
 
     fn play(&self, grid: Grid) -> crate::Result<Position> {
         loop {
-            match read_position() {
+            match self.read_position() {
                 Ok(pos) => {
                     if grid[pos as usize].is_none() {
                         return Ok(pos);
