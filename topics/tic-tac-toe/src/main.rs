@@ -16,7 +16,7 @@ fn main() {
             println!("It's a tie!");
         }
         Err(_e) => {
-            eprintln!("An error occurred");
+            eprintln!("An error occurred: {:?}", _e);
         }
     }
 }
