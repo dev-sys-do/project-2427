@@ -5,12 +5,23 @@ use crate::{
     types::{Error, Grid, PlayerID, Position},
 };
 
+const COLOR_GREEN: &str = "\x1b[32m";
+const COLOR_RED: &str = "\x1b[31m";
+const COLOR_BOLD: &str = "\x1b[1m";
+const COLOR_RESET: &str = "\x1b[0m";
+
 /// A player that interacts via a terminal (stdout and stdin)
-pub struct TerminalPlayer;
+pub struct TerminalPlayer {
+    old_grid: Option<Grid>,
+    me: Option<PlayerID>,
+}
 
 impl TerminalPlayer {
     pub fn new() -> Self {
-        TerminalPlayer
+        TerminalPlayer {
+            old_grid: None,
+            me: None,
+        }
     }
 
     fn read_position(&self) -> crate::Result<Position> {
@@ -34,6 +45,27 @@ impl TerminalPlayer {
         stdout().flush().unwrap();
     }
 
+    fn prepare_cell_for_print(&self, grid: Grid, index: usize) -> String {
+        let me = self.me.expect("self.me should be set by game_start()");
+        let s = match grid[index] {
+            // me
+            Some(player) if player == me => format!("{}X{}", COLOR_GREEN, COLOR_RESET),
+            // other player
+            Some(_) => format!("{}O{}", COLOR_RED, COLOR_RESET),
+            // not player (early return)
+            None => return format!("{}", index),
+        };
+
+        // If it was just placed, make it bold
+        if let Some(old_grid) = self.old_grid
+            && old_grid[index].is_none()
+        {
+            format!("{}{}", COLOR_BOLD, s)
+        } else {
+            s
+        }
+    }
+
     fn print_grid(&self, grid: Grid) {
         self.reset_screen();
 
@@ -42,11 +74,7 @@ impl TerminalPlayer {
         println!();
 
         for i in 0..9 {
-            match grid[i] {
-                Some(PlayerID::Player1) => print!(" X "),
-                Some(PlayerID::Player2) => print!(" O "),
-                None => print!(" {} ", i),
-            }
+            print!(" {} ", self.prepare_cell_for_print(grid, i));
             if i % 3 == 2 {
                 println!();
             }
@@ -55,16 +83,19 @@ impl TerminalPlayer {
 }
 
 impl PlayerBehavior for TerminalPlayer {
-    fn game_start(&mut self, _me: PlayerID) {
+    fn game_start(&mut self, me: PlayerID) {
         println!("Game starts");
+        self.me = Some(me);
     }
 
-    fn play(&self, grid: Grid) -> crate::Result<Position> {
+    fn play(&mut self, grid: Grid) -> crate::Result<Position> {
         self.print_grid(grid);
         loop {
             match self.read_position() {
                 Ok(pos) => {
                     if grid[pos as usize].is_none() {
+                        // Position validated
+                        self.old_grid = Some(grid);
                         return Ok(pos);
                     } else {
                         println!("Position {} is already taken. Try again.", pos);
@@ -78,7 +109,7 @@ impl PlayerBehavior for TerminalPlayer {
         }
     }
 
-    fn game_ended(&self, grid: Grid, winner: bool) {
+    fn game_ended(&mut self, grid: Grid, winner: bool) {
         self.print_grid(grid);
         if winner {
             println!("You won!");

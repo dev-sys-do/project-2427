@@ -103,7 +103,7 @@ impl PlayerBehavior for AIMinMax {
         self.ai_player = Some(me);
     }
 
-    fn play(&self, grid: Grid) -> crate::Result<Position> {
+    fn play(&mut self, grid: Grid) -> crate::Result<Position> {
         if let Some(best_move) = self.find_best_move(grid, self.ai_player.expect("self.ai_player should be set by game_start()")) {
             Ok(best_move)
         } else {
@@ -113,7 +113,7 @@ impl PlayerBehavior for AIMinMax {
         }
     }
 
-    fn game_ended(&self, _grid: Grid, _winner: bool) {
+    fn game_ended(&mut self, _grid: Grid, _winner: bool) {
         // AI doesn't need to do anything when game ends
     }
 }

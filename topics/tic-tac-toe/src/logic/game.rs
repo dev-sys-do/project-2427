@@ -23,7 +23,7 @@ impl<T1: PlayerBehavior, T2: PlayerBehavior> Game<T1, T2> {
         self.player1.game_start(crate::types::PlayerID::Player1);
         self.player2.game_start(crate::types::PlayerID::Player2);
 
-        let mut current_player: &dyn PlayerBehavior = &self.player1;
+        let mut current_player: &mut dyn PlayerBehavior = &mut self.player1;
         let mut current_player_id = crate::types::PlayerID::Player1;
 
         loop {
@@ -46,10 +46,10 @@ impl<T1: PlayerBehavior, T2: PlayerBehavior> Game<T1, T2> {
 
                         // Switch players
                         if current_player_id == crate::types::PlayerID::Player1 {
-                            current_player = &self.player2;
+                            current_player = &mut self.player2;
                             current_player_id = crate::types::PlayerID::Player2;
                         } else {
-                            current_player = &self.player1;
+                            current_player = &mut self.player1;
                             current_player_id = crate::types::PlayerID::Player1;
                         }
                     } else {
